@@ -4,10 +4,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  // url = env("DATABASE_URL")
 }
 
-// User Model (NextAuth compatible)
 model User {
   id            String    @id @default(cuid())
   name          String?

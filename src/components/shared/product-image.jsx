@@ -23,7 +23,7 @@ export default function ProductImages({ images, name }) {
             key={index}
             onClick={() => setCurrent(index)}
             className={cn(
-              "relative w-20 h-20 rounded-md overflow-hidden border-2 flex-shrink-0 bg-white",
+              "relative w-20 h-20 rounded-md overflow-hidden border-2 shrink-0 bg-white",
               current === index ? "border-blue-600" : "border-gray-200"
             )}
           >
