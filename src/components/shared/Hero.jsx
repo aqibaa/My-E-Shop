@@ -39,8 +39,6 @@ function Hero() {
                     </div>
                 </div>
 
-
-                
                     <div className='relative aspect-4/3 w-full max-w-lg
                      overflow-hidden rounded-3xl lg:max-w-xl'>
                         <Image

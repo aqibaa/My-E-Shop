@@ -9,21 +9,18 @@ export default function Home() {
   return (
     <>
       <Hero />
-
-      {/* Category Section */}
-      <div className="my-16">
+      <div className="mt-8">
         <FeaturedCategories></FeaturedCategories>
       </div>
 
-      {/* New Arrivals Section */}
-      <section className="wrapper max-w-7xl mx-auto px-4 py-16">
+      <section className="wrapper max-w-7xl mx-auto px-4">
        <ProductsGrid
         title="New Arrivals"
         subtitle="The latest additions to our collection"
       />
       </section>
       <PromoBanner></PromoBanner>
-        <section className="wrapper max-w-7xl mx-auto px-4 py-16">
+        <section className="wrapper max-w-7xl mx-auto px-4">
        <ProductsGrid
         title="Best Seller"
         subtitle="Most Loved By Our Customer"

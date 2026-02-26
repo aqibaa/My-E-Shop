@@ -1,12 +1,10 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
 // User Model (NextAuth compatible)
@@ -14,8 +12,8 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
-  password      String?   // Optional because of Social Login
-  role          String    @default("CUSTOMER") // ADMIN or CUSTOMER
+  password      String?
+  role          String    @default("CUSTOMER")
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -24,7 +22,6 @@ model User {
   orders        Order[]
 }
 
-// NextAuth ke liye zaroori (Social Login links yahan store honge)
 model Account {
   id                 String  @id @default(cuid())
   userId             String
@@ -46,25 +43,30 @@ model Account {
 
 // Product Management
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String      @db.Text
-  price       Decimal     @db.Decimal(10, 2)
-  stock       Int         @default(0)
-  images      String[]    // Array of image URLs
-  categoryId  String
-  isFeatured  Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String    @id @default(cuid())
+  name          String   
+  slug          String    @unique
+  description   String
+  price         Decimal   @db.Decimal(10, 2)
+  originalPrice Decimal?  @db.Decimal(10, 2)
+  stock         Int       @default(0)
+  rating        Decimal   @default(0) @db.Decimal(3, 2)
+  reviewCount   Int       @default(0)
+  
+  category      String    
+  brand         String
+  badge         String?
+  
+  images        String[]
+  colors        String[]
+  sizes         String[]
+  features      String[]
+  
+  isFeatured    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  category    Category    @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-}
-
-model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  products  Product[]
+  orderItems    OrderItem[]
 }
 
 // Order System
@@ -72,7 +74,7 @@ model Order {
   id          String      @id @default(cuid())
   userId      String
   totalAmount Decimal     @db.Decimal(10, 2)
-  status      String      @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+  status      String      @default("PENDING")
   isPaid      Boolean     @default(false)
   phone       String      @default("")
   address     String      @default("")
@@ -88,7 +90,7 @@ model OrderItem {
   orderId   String
   productId String
   quantity  Int
-  price     Decimal @db.Decimal(10, 2) // Price at the time of order
+  price     Decimal @db.Decimal(10, 2)
 
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])

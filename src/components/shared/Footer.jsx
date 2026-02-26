@@ -2,8 +2,8 @@ import { Separator } from "@/components/ui/separator";
 
 export default function Footer() {
     return (
-        <footer className="bg-white border-t pt-16 pb-8">
-            <div className="wrapper max-w-7xl mx-auto px-4">
+        <footer className="bg-white border-t pb-8">
+            <div className="wrapper max-w-7xl mx-auto px-4 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <h3 className="font-serif text-xl font-bold mb-4">My-E-Shop</h3>
@@ -37,8 +37,6 @@ export default function Footer() {
                     </div>
                 </div>
                 <Separator className="my-8" />
-                <p className="text-center text-xs text-gray-400">© 2025 My-E-Shop. All rights reserved.</p>
-            </div>
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p className="text-xs text-muted-foreground">
                     &copy; {new Date().getFullYear()} My-E-Shop. All rights reserved.
@@ -56,7 +54,7 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
-
+            </div>
         </footer>
     );
 }

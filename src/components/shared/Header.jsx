@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCartStore } from "@/store/cart-store";
 import Link from "next/link";
 import { Search, ShoppingBag, Heart, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,10 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
+    const items = useCartStore((state) => state.items)
+    const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
     const [searchOpen, setSearchOpen] = useState(false);
-    const cartCount = 0; 
+   
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -26,7 +29,7 @@ export default function Header() {
             </div>
 
             <div className="wrapper flex h-16 items-center justify-between px-4 max-w-7xl mx-auto">
-                {/* Mobile Menu  */}
+                {/* // Mobile Menu   */}
                 <div className="flex items-center gap-4">
                     <Sheet>
                         <SheetTrigger asChild>
@@ -63,19 +66,40 @@ export default function Header() {
 
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={() => setSearchOpen(!searchOpen)}>
-                        {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+                        {searchOpen ? <X className="h-5 w-5" /> : <Search className="size-5" />}
                     </Button>
-                    
                     <Link href="/cart">
-                        <Button variant="ghost" size="icon" className="relative">
-                            <ShoppingBag className="h-5 w-5" />
-                            {cartCount > 0 && (
-                                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
-                                    {cartCount}
+                        <div className="relative">
+                            <ShoppingBag />
+                            {itemCount > 0 && (
+                                <Badge className="absolute -top-2 -right-2 px-1 py-0.5 text-xs">
+                                    {itemCount}
                                 </Badge>
                             )}
-                        </Button>
+                        </div>
                     </Link>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="hidden sm:inline-flex"
+                    >
+                        <Link href="/wishlist" aria-label="Wishlist">
+                            <Heart className="size-5" />
+                        </Link>
+                    </Button>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="hidden sm:inline-flex"
+                    >
+                        <Link href="/account" aria-label="Account">
+                            <User className="size-5" />
+                        </Link>
+                    </Button>
                 </div>
             </div>
             {searchOpen && (
