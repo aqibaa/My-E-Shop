@@ -27,7 +27,7 @@ export function PromoBanner() {
               size="lg"
               className="rounded-xl px-8"
             >
-              <Link href="/products?sale=true">
+              <Link href="/product?sale=true">
                 Shop the Sale
                 <ArrowRight className="ml-2 size-4" />
               </Link>

@@ -1,119 +1,133 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import { SlidersHorizontal, X } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
 } from "@/components/ui/sheet"
 import ProductCard from "@/components/shared/Product-card"
 import Link from "next/link"
+import { useFilterStore } from "@/store/filter-store";
+
 
 function FilterSidebar({
-  priceRange,
-  setPriceRange,
-  selectedBrands,
-  toggleBrand,
-  selectedCategories,
-  toggleCategory,
-  availableCategories, 
-  availableBrands      
-}) {    
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-foreground">Price Range</h3>
-        <Slider
-          min={0}
-          max={3000} 
-          step={50}
-          value={priceRange}
-          onValueChange={setPriceRange}
-        />
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>${priceRange[0]}</span>
-          <span>${priceRange[1]}</span>
+    availableCategories, availableBrands
+}) {
+    const {
+        priceRange, setPriceRange,
+        selectedBrands, toggleBrand,
+        selectedCategories, toggleCategory
+    } = useFilterStore();
+
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+                <h3 className="text-sm font-semibold text-foreground">Price Range</h3>
+                <Slider
+                    min={0}
+                    max={3000}
+                    step={50}
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
+                </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold text-foreground">Categories</h3>
+                {availableCategories.map((cat) => (
+                    <label key={cat} className="flex cursor-pointer items-center gap-2.5">
+                        <Checkbox
+                            checked={selectedCategories.includes(cat)}
+                            onCheckedChange={() => toggleCategory(cat)}
+                        />
+                        <span className="text-sm text-muted-foreground">{cat}</span>
+                    </label>
+                ))}
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold text-foreground">Brands</h3>
+                {availableBrands.map((brand) => (
+                    <label key={brand} className="flex cursor-pointer items-center gap-2.5">
+                        <Checkbox
+                            checked={selectedBrands.includes(brand)}
+                            onCheckedChange={() => toggleBrand(brand)}
+                        />
+                        <span className="text-sm text-muted-foreground">{brand}</span>
+                    </label>
+                ))}
+            </div>
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-foreground">Categories</h3>
-        {availableCategories.map((cat) => (
-          <label key={cat} className="flex cursor-pointer items-center gap-2.5">
-            <Checkbox
-              checked={selectedCategories.includes(cat)}
-              onCheckedChange={() => toggleCategory(cat)}
-            />
-            <span className="text-sm text-muted-foreground">{cat}</span>
-          </label>
-        ))}
-      </div>
-
-      <Separator />
-
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-foreground">Brands</h3>
-        {availableBrands.map((brand) => (
-          <label key={brand} className="flex cursor-pointer items-center gap-2.5">
-            <Checkbox
-              checked={selectedBrands.includes(brand)}
-              onCheckedChange={() => toggleBrand(brand)}
-            />
-            <span className="text-sm text-muted-foreground">{brand}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  )
+    )
 }
 
 export default function AllProductsClient({ products }) {
-   
-    const categories = [...new Set(products.map(p => p.category))];
-    const brands = [...new Set(products.map(p => p.brand))];
 
-    const [priceRange, setPriceRange] = useState([0, 3000])
-    const [selectedBrands, setSelectedBrands] = useState([])
-    const [selectedCategories, setSelectedCategories] = useState([])
-    const [sortBy, setSortBy] = useState("featured")
+    const searchParams = useSearchParams();
+    const availableCategories = [...new Set(products.map(p => p.category))];
+    const availableBrands = [...new Set(products.map(p => p.brand))];
 
-    const toggleBrand = (brand) => {
-        setSelectedBrands((prev) =>
-            prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-        )
-    }
+    const {
+        priceRange,
+        setPriceRange,
+        selectedBrands,
+        toggleBrand,
+        selectedCategories,
+        toggleCategory,
+        sortBy,
+        setSortBy,
+        resetFilters
+    } = useFilterStore();
 
-    const toggleCategory = (category) => {
-        setSelectedCategories((prev) =>
-            prev.includes(category)
-                ? prev.filter((c) => c !== category)
-                : [...prev, category]
-        )
-    }
+
+    useEffect(() => {
+        const categoryParam = searchParams.get('category');
+        if (categoryParam) {
+
+            const matchedCategory = availableCategories.find(
+                c => c.toLowerCase() === categoryParam.toLowerCase()
+            );
+
+            if (matchedCategory) {
+                resetFilters();
+                if (!selectedCategories.includes(matchedCategory)) {
+                    toggleCategory(matchedCategory);
+                }
+            }
+        }
+    }, [searchParams]);
 
     const filteredProducts = products
         .filter((p) => Number(p.price) >= priceRange[0] && Number(p.price) <= priceRange[1])
@@ -135,7 +149,7 @@ export default function AllProductsClient({ products }) {
                     return 0
             }
         })
-       
+
     const activeFilterCount =
         selectedBrands.length + selectedCategories.length + (priceRange[0] > 0 || priceRange[1] < 3000 ? 1 : 0)
 
@@ -161,14 +175,9 @@ export default function AllProductsClient({ products }) {
                     <div className="sticky top-36">
                         <h2 className="mb-6 text-lg font-semibold text-foreground">Filters</h2>
                         <FilterSidebar
-                            priceRange={priceRange}
-                            setPriceRange={setPriceRange}
-                            selectedBrands={selectedBrands}
-                            toggleBrand={toggleBrand}
-                            selectedCategories={selectedCategories}
-                            toggleCategory={toggleCategory}
-                            availableCategories={categories}
-                            availableBrands={brands}
+
+                            availableCategories={availableCategories}
+                            availableBrands={availableBrands}
                         />
                     </div>
                 </aside>
@@ -189,14 +198,8 @@ export default function AllProductsClient({ products }) {
                                     </SheetHeader>
                                     <div className="px-4 pt-6">
                                         <FilterSidebar
-                                            priceRange={priceRange}
-                                            setPriceRange={setPriceRange}
-                                            selectedBrands={selectedBrands}
-                                            toggleBrand={toggleBrand}
-                                            selectedCategories={selectedCategories}
-                                            toggleCategory={toggleCategory}
-                                            availableCategories={categories}
-                                            availableBrands={brands}
+                                            availableCategories={availableCategories}
+                                            availableBrands={availableBrands}
                                         />
                                     </div>
                                 </SheetContent>
@@ -223,7 +226,7 @@ export default function AllProductsClient({ products }) {
                         </Select>
                     </div>
 
-   {activeFilterCount > 0 && (
+                    {activeFilterCount > 0 && (
                         <div className="mb-6 flex flex-wrap items-center gap-2">
                             {selectedCategories.map((cat) => (
                                 <Button
@@ -231,7 +234,7 @@ export default function AllProductsClient({ products }) {
                                     variant="secondary"
                                     size="sm"
                                     className="rounded-full"
-                                    onClick={() => toggleCategory(cat, selectedCategories, setSelectedCategories)}
+                                    onClick={() => toggleCategory(cat)}
                                 >
                                     {cat}
                                     <X className="ml-1 size-3" />
@@ -252,16 +255,11 @@ export default function AllProductsClient({ products }) {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                    setSelectedBrands([])
-                                    setSelectedCategories([])
-                                    setPriceRange([0, 500])
-                                }}
-                            >
+                                onClick={resetFilters}>
                                 Clear all
                             </Button>
                         </div>
-                    )} 
+                    )}
 
                     {filteredProducts.length > 0 ? (
                         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
@@ -272,13 +270,10 @@ export default function AllProductsClient({ products }) {
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <p className="text-lg font-medium text-foreground">No products found</p>
-                            <Button 
-                                variant="link" 
-                                onClick={() => {
-                                    setSelectedBrands([])
-                                    setSelectedCategories([])
-                                    setPriceRange([0, 3000])
-                                }}
+                            <p className="text-sm text-muted-foreground">Category: {searchParams.get('category')}</p>
+                            <Button
+                                variant="link"
+                                onClick={resetFilters}
                             >
                                 Clear Filters
                             </Button>

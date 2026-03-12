@@ -1,0 +1,95 @@
+"use client"
+
+import { useState } from "react"
+import { Search, User, Mail, Calendar, ShoppingBag } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
+export default function CustomersClient({ customers }) {
+    const [searchTerm, setSearchTerm] = useState("")
+    const filteredCustomers = customers.filter((c) =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="font-serif text-2xl font-bold text-foreground">Customers Directory</h1>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name or email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="rounded-xl pl-9 bg-white"
+                        />
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <User className="size-4" /> Total: {customers.length} Customers
+                    </div>
+                </div>
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-gray-50/50">
+                            <TableHead className="pl-5">Customer</TableHead>
+                            <TableHead>Contact Info</TableHead>
+                            <TableHead>Joined Date</TableHead>
+                            <TableHead className="text-center">Total Orders</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredCustomers.length > 0 ? (
+                            filteredCustomers.map((customer) => (
+                                <TableRow key={customer.id}>
+                                    <TableCell className="pl-5">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="size-10 border">
+                                                <AvatarFallback className="bg-blue-50 text-blue-600 font-semibold">
+                                                    {customer.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium text-foreground">{customer.name}</span>
+                                        </div>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Mail className="size-3" />
+                                            <span className="text-sm">{customer.email}</span>
+                                        </div>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                            <Calendar className="size-3" />
+                                            {new Date(customer.joinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </TableCell>
+
+\                                    <TableCell className="text-center">
+                                        <div className="inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">
+                                            <ShoppingBag className="size-3 text-gray-500" />
+                                            {customer.totalOrders}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
+                                    No customers found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    )
+}

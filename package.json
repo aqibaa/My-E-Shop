@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.39.0",
     "@prisma/client": "5.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -18,12 +19,14 @@
     "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
+    "next-cloudinary": "^6.17.5",
     "next-themes": "^0.4.6",
     "pg": "^8.18.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-day-picker": "^9.13.2",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.6.5",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",

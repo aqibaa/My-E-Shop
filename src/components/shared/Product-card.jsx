@@ -1,16 +1,40 @@
 "use client"
 import Image from "next/image"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Heart, ShoppingBag, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useState } from "react"
+import { useWishlistStore } from "@/store/wishlist-store"
+import { useCartStore } from "@/store/cart-store"
+import { toast } from "sonner"
 
 
 
- function ProductCard({product}) {
-    
-  const [isWishlisted, setIsWishlisted] = useState(false)
+function ProductCard({ product }) {
+  const  addItem  = useCartStore((state) => (state.addItem));
+  const { toggleWishlist, items } = useWishlistStore();
+  const isLiked = items.some((item) => item.id === product.id)
+
+
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem(product);
+    toast(`items added to cart!`)
+  }
+
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -39,16 +63,16 @@ import { useState } from "react"
           variant="ghost"
           size="icon"
           className="absolute right-3 top-3 size-9 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={() => setIsWishlisted(!isWishlisted)}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          onClick={handleWishlistClick}
         >
           <Heart
-            className={`size-4 ${isWishlisted ? "fill-destructive text-destructive" : "text-foreground"}`}
+            className={`size-4 transition-colors ${isMounted && isLiked ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`}
           />
         </Button>
 
         <div className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          <Button className="w-full rounded-xl" size="sm">
+          <Button className="w-full rounded-xl" size="sm"
+            onClick={handleAddToCart}>
             <ShoppingBag className="mr-2 size-4" />
             Add to Cart
           </Button>
@@ -68,11 +92,10 @@ import { useState } from "react"
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`size-3 ${
-                  i < Math.floor(product.rating)
-                    ? "fill-foreground text-foreground"
-                    : "fill-muted text-muted"
-                }`}
+                className={`size-3 ${i < Math.floor(product.rating)
+                  ? "fill-foreground text-foreground"
+                  : "fill-muted text-muted"
+                  }`}
               />
             ))}
           </div>
@@ -80,22 +103,22 @@ import { useState } from "react"
         </div>
 
         {/* Price */}
-<div className="flex items-center flex-wrap gap-2">
-  <span className="text-base font-semibold text-foreground">
-    ${product.price}
-  </span>
-  {product.originalPrice && (
-    <span className="text-sm text-muted-foreground line-through">
-      ${product.originalPrice}
-    </span>
-  )}
-  {discount > 0 && (
-    <span className="text-xs font-medium text-destructive">
-      -{discount}%
-    </span>
-  )}
-</div>
-  </div>
+        <div className="flex items-center flex-wrap gap-2">
+          <span className="text-base font-semibold text-foreground">
+            ${product.price}
+          </span>
+          {product.originalPrice && (
+            <span className="text-sm text-muted-foreground line-through">
+              ${product.originalPrice}
+            </span>
+          )}
+          {discount > 0 && (
+            <span className="text-xs font-medium text-destructive">
+              -{discount}%
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

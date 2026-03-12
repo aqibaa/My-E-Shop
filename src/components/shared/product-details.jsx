@@ -1,6 +1,6 @@
 
 "use client"
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Shield,
 } from "lucide-react"
+import { useWishlistStore } from "@/store/wishlist-store";
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -33,24 +34,29 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import ProductCard from "@/components/shared/Product-card"
-import {  reviewDistribution } from "@/lib/data"
+import { reviewDistribution } from "@/lib/data"
 import { useCartStore } from '@/store/cart-store';
-import { toast } from "sonner" 
+import { toast } from "sonner"
 
-export default  function ProductPage({product,relatedProducts }) {
-    const [quantity, setQuantity] = useState(1);
-    const addItem = useCartStore((state) => state.addItem);
 
-    const [selectedImage, setSelectedImage] = useState(0)
-    const [selectedColor, setSelectedColor] = useState(0)
-  
-   const productSizes = product.sizes || [] 
-   const [selectedSize, setSelectedSize] = useState(
+export default function ProductPage({ product, relatedProducts }) {
+  const [quantity, setQuantity] = useState(1);
+  const addItem = useCartStore((state) => state.addItem);
+
+  const { toggleWishlist, items } = useWishlistStore();
+  const isLiked = items.some((item) => item.id === product.id)
+
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => setIsMounted(true), [])
+
+  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedColor, setSelectedColor] = useState(0)
+
+  const productSizes = product.sizes || []
+  const [selectedSize, setSelectedSize] = useState(
     productSizes.length > 0 ? productSizes[0] : null
   )
-  
- 
-  const [isWishlisted, setIsWishlisted] = useState(false)
+
 
   useEffect(() => {
     setSelectedImage(0)
@@ -60,24 +66,23 @@ export default  function ProductPage({product,relatedProducts }) {
   }, [product])
 
   const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
 
- const handleAddToCart = () => {
-    addItem(product,quantity);
+  const handleAddToCart = () => {
+    addItem(product, quantity);
     toast(`${quantity} items added to cart!`)
-    alert(`${quantity} items added to cart!`);  };
+  };
 
 
   const productColors = product.colors || []
-  const productImages = product.images && product.images.length > 0 
-    ? product.images 
+  const productImages = product.images && product.images.length > 0
+    ? product.images
     : [product.image || "/placeholder.jpg"]
- 
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
-      {/* Breadcrumbs */}
       <Breadcrumb className="mb-8">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -116,15 +121,14 @@ export default  function ProductPage({product,relatedProducts }) {
             )}
           </div>
 
-          {/* Thumbnails */}
           <div className="flex gap-3">
             {product.images.map((img, i) => (
               <button
                 key={i}
                 onClick={() => setSelectedImage(i)}
                 className={`relative size-20 overflow-hidden rounded-xl border-2 transition-all ${selectedImage === i
-                    ? "border-foreground"
-                    : "border-transparent opacity-60 hover:opacity-100"
+                  ? "border-foreground"
+                  : "border-transparent opacity-60 hover:opacity-100"
                   }`}
               >
                 <Image src={img} alt={`View ${i + 1}`} fill className="object-cover" sizes="80px" />
@@ -133,22 +137,20 @@ export default  function ProductPage({product,relatedProducts }) {
           </div>
         </div>
 
-        {/* Right: Details */}
         <div className="flex flex-1 flex-col gap-6">
           <div className="flex flex-col gap-3">
             <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl">
               {product.name}
             </h1>
 
-            {/* Rating */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
                     className={`size-4 ${i < Math.floor(product.rating)
-                        ? "fill-foreground text-foreground"
-                        : "fill-muted text-muted"
+                      ? "fill-foreground text-foreground"
+                      : "fill-muted text-muted"
                       }`}
                   />
                 ))}
@@ -158,7 +160,6 @@ export default  function ProductPage({product,relatedProducts }) {
               </span>
             </div>
 
-            {/* Price */}
             <div className="flex items-center gap-3">
               <span className="text-2xl font-bold text-foreground">
                 ${Number(product.price).toFixed(2)}
@@ -183,7 +184,6 @@ export default  function ProductPage({product,relatedProducts }) {
 
           <Separator />
 
-          {/* Color Selector */}
           {productColors.length > 0 && (
             <div className="flex flex-col gap-3">
               <span className="text-sm font-medium text-foreground">
@@ -198,8 +198,8 @@ export default  function ProductPage({product,relatedProducts }) {
                     key={color.name}
                     onClick={() => setSelectedColor(i)}
                     className={`size-9 rounded-full border-2 transition-all ${selectedColor === i
-                        ? "border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                        : "border-border"
+                      ? "border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                      : "border-border"
                       }`}
                     style={{ backgroundColor: color }}
                     aria-label={color.name}
@@ -209,7 +209,6 @@ export default  function ProductPage({product,relatedProducts }) {
             </div>
           )}
 
-          {/* Size Selector */}
           {productSizes.length > 0 && (
             <div className="flex flex-col gap-3">
               <span className="text-sm font-medium text-foreground">Size</span>
@@ -219,8 +218,8 @@ export default  function ProductPage({product,relatedProducts }) {
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={`flex h-10 min-w-12 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-all ${selectedSize === size
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-foreground hover:border-foreground"
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border text-foreground hover:border-foreground"
                       }`}
                   >
                     {size}
@@ -230,7 +229,6 @@ export default  function ProductPage({product,relatedProducts }) {
             </div>
           )}
 
-          {/* Quantity + Actions */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-foreground">Quantity</span>
@@ -261,8 +259,8 @@ export default  function ProductPage({product,relatedProducts }) {
 
             <div className="flex gap-3">
               <Button size="lg"
-              onClick={handleAddToCart}
-              className="flex-1 rounded-xl text-base">
+                onClick={handleAddToCart}
+                className="flex-1 rounded-xl text-base">
                 <ShoppingBag className="mr-2 size-5" />
                 Add to Cart
               </Button>
@@ -270,12 +268,11 @@ export default  function ProductPage({product,relatedProducts }) {
                 size="lg"
                 variant="outline"
                 className="rounded-xl"
-                onClick={() => setIsWishlisted(!isWishlisted)}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                onClick={() => toggleWishlist(product)}
+                aria-label={isMounted && isLiked ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
-                  className={`size-5 ${isWishlisted ? "fill-destructive text-destructive" : ""}`}
-                />
+                  className={isMounted && isLiked ? "fill-red-500 text-red-500" : ""} />
               </Button>
             </div>
 
@@ -285,7 +282,6 @@ export default  function ProductPage({product,relatedProducts }) {
             </Button>
           </div>
 
-          {/* Guarantees */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: Truck, label: "Free Shipping" },
@@ -302,7 +298,6 @@ export default  function ProductPage({product,relatedProducts }) {
             ))}
           </div>
 
-          {/* Accordions */}
           <Accordion type="single" collapsible defaultValue="description">
             <AccordionItem value="description">
               <AccordionTrigger>Description</AccordionTrigger>
@@ -336,13 +331,11 @@ export default  function ProductPage({product,relatedProducts }) {
         </div>
       </div>
 
-      {/* Customer Reviews */}
       <section className="mt-10">
         <h2 className="mb-8 font-serif text-2xl font-bold text-foreground">
           Customer Reviews
         </h2>
         <div className="flex flex-col gap-8 lg:flex-row lg:gap-16">
-          {/* Rating summary */}
           <div className="flex flex-col items-center gap-4 lg:w-60">
             <span className="text-5xl font-bold text-foreground">
               {product.rating}
@@ -352,8 +345,8 @@ export default  function ProductPage({product,relatedProducts }) {
                 <Star
                   key={i}
                   className={`size-5 ${i < Math.floor(product.rating)
-                      ? "fill-foreground text-foreground"
-                      : "fill-muted text-muted"
+                    ? "fill-foreground text-foreground"
+                    : "fill-muted text-muted"
                     }`}
                 />
               ))}
@@ -363,7 +356,6 @@ export default  function ProductPage({product,relatedProducts }) {
             </span>
           </div>
 
-          {/* Distribution bars */}
           <div className="flex flex-1 flex-col gap-3">
             {reviewDistribution.map(({ stars, percentage }) => (
               <div key={stars} className="flex items-center gap-3">
@@ -380,21 +372,21 @@ export default  function ProductPage({product,relatedProducts }) {
         </div>
       </section>
 
-      
-        <div className="mt-10">
+
+      <div className="mt-10">
         {relatedProducts.length > 0 ? (
           <section className="mt-20">
-        <h2 className="mb-8 font-serif text-2xl font-bold text-foreground">
-          You May Also Like
-        </h2>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+            <h2 className="mb-8 font-serif text-2xl font-bold text-foreground">
+              You May Also Like
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              {relatedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </section>
         ) : (
-        
+
           <div className="flex flex-col items-center justify-center py-12 bg-secondary/20 rounded-xl border border-dashed border-secondary">
             <p className="text-lg font-medium text-muted-foreground">
               No similar items found in this category yet.
@@ -404,7 +396,7 @@ export default  function ProductPage({product,relatedProducts }) {
             </Link>
           </div>
         )}
-        </div>
+      </div>
     </div>
   )
 }

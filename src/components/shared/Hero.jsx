@@ -11,7 +11,7 @@ function Hero() {
              items-center px-4 py-16 lg:flex-row lg:px-6 lg:py-24'>
                 <div className='flex flex-1 flex-col items-center gap-6 text-center lg:items-start lg:text-left
                 '>
-                    <span className='text-xs font-semibold uppercase tracking-[0.2rem] text-muted-foreground'>
+                    <span className='text-xs font-semibold uppercase tracking-[0.2rem] text-muted-foreground mt-5'>
                         New Season Collection
                     </span>
                     <h1 className='font-serif text-4xl font-bold leading-tight
@@ -24,14 +24,14 @@ function Hero() {
                         Premium quality, timeless design.</p>
                     <div className='flex items-center gap-3'>
                         <Button asChild size='lg' className='rounded-xl px-8 '>
-                            <Link href='/products'>
+                            <Link href='/product'>
                                 Shop Now
                                 <ArrowRight className='ml-2 size-4' />
                             </Link>
                         </Button>
                         <Button asChild variant="outline"
                             size="lg" className="rounded-xl px-8">
-                            <Link href='/products?sort=newest'>
+                            <Link href='/product?sort=newest'>
                                 New Arrivals
                             </Link>
                         </Button>

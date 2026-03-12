@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { useCartStore } from "@/store/cart-store";
 import Link from "next/link";
 import { Search, ShoppingBag, Heart, User, Menu, X } from "lucide-react";
@@ -10,17 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const NAV_LINKS = [
-    { label: "New Arrivals", href: "/products?sort=newest" },
-    { label: "Women", href: "/products?category=women" },
-    { label: "Men", href: "/products?category=men" },
-    { label: "Electronics", href: "/products?category=electronics" },
+    { label: "New Arrivals", href: "/product?sort=newest" },
+    { label: "Women", href: "/product?category=women" },
+    { label: "Men", href: "/product?category=men" },
+    { label: "Electronics", href: "/product?category=electronics" },
 ];
 
 export default function Header() {
     const items = useCartStore((state) => state.items)
     const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
     const [searchOpen, setSearchOpen] = useState(false);
-   
+
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -79,13 +80,31 @@ export default function Header() {
                         </div>
                     </Link>
 
+
+                    <div className="flex items-center gap-2">
+                        <SignedOut>
+                            {/* Agar Logged Out hai */}
+                            <SignInButton mode="modal">
+                                <Button variant="outline" size="sm">Sign In</Button>
+                            </SignInButton>
+                        </SignedOut>
+
+                        <SignedIn>
+                            {/* Agar Logged In hai -> Profile Icon dikhao */}
+                            <UserButton
+                                afterSignOutUrl="/"
+                                userProfileMode="navigation" // Custom page use karne ke liye
+                                userProfileUrl="/account" />
+                        </SignedIn>
+                    </div>
+
                     <Button
                         variant="ghost"
                         size="icon"
                         asChild
                         className="hidden sm:inline-flex"
                     >
-                        <Link href="/wishlist" aria-label="Wishlist">
+                        <Link href="/Wishlist" aria-label="Wishlist">
                             <Heart className="size-5" />
                         </Link>
                     </Button>

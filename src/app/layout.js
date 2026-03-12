@@ -3,6 +3,8 @@ import "./globals.css";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from "@/components/ui/sonner"
 
 // Font Configuration (Professional Way)
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -20,6 +22,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
+    <ClerkProvider>
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="antialiased font-sans min-h-screen flex flex-col">
         <Header />
@@ -27,9 +30,11 @@ export default function RootLayout({ children }) {
           <main className="flex-1">
             {children}
           </main>
+           <Toaster />
         </TooltipProvider>
         <Footer />
       </body>
     </html>
+    </ClerkProvider>
   );
 }
