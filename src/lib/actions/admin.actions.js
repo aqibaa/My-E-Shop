@@ -2,6 +2,9 @@
 
 import prisma from "../db";
 import { convertToPlainObject } from "../utils";
+
+
+
 export async function getDashboardData() {
   try {
     const totalCustomers = await prisma.user.count({
@@ -57,32 +60,144 @@ export async function getDashboardData() {
 }
 
 
-
-export async function getAllCustomers() {
+export async function getAdminProducts({ page = 1, limit = 10, search = "" }) {
   try {
-    const customers = await prisma.user.findMany({
-      where: { role: 'CUSTOMER' }, 
-      orderBy: { createdAt: 'desc' }, 
-      include: {
-        _count: {
-          select: { orders: true } 
-        }
-      }
+    const skip = (Number(page) - 1) * limit;
+    
+    let whereCondition = {};
+    if (search) {
+      whereCondition = {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { id: { contains: search, mode: 'insensitive' } },
+        ]
+      };
+    }
+
+    const [products, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where: whereCondition })
+    ]);
+
+    const formattedProducts = products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      sku: p.id.slice(-6).toUpperCase(),
+      price: Number(p.price),
+      stock: p.stock,
+      category: p.category,
+      images: p.images,
+      slug: p.slug,
+      status: p.stock > 0 ? "Active" : "Out of Stock"
+    }));
+
+    return {
+      data: convertToPlainObject(formattedProducts),
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: Number(page),
+      totalCount
+    };
+  } catch (error) {
+    console.error("Admin Products Error:", error);
+    return { data: [], totalPages: 1, currentPage: 1, totalCount: 0 };
+  }
+}
+
+export async function getAdminOrdersPaginated({ page = 1, limit = 10, search = "", status = "all" }) {
+  try {
+    const skip = (Number(page) - 1) * limit;
+    
+    let whereCondition = {};
+    
+    if (status !== "all") {
+        if (status === "active") whereCondition.status = { not: "Delivered" };
+        else whereCondition.status = status;
+    }
+
+    const [orders, totalCount] = await Promise.all([
+      prisma.order.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.order.count({ where: whereCondition })
+    ]);
+
+    const formattedOrders = orders.map(order => {
+      const address = JSON.parse(order.shippingAddress || '{}');
+      return {
+        ...order,
+        itemsPrice: Number(order.itemsPrice),
+        shippingPrice: Number(order.shippingPrice),
+        taxPrice: Number(order.taxPrice),
+        totalPrice: Number(order.totalPrice),
+        customerName: `${address.firstName || 'Guest'} ${address.lastName || ''}`,
+        email: address.email || 'No email',
+        createdAt: order.createdAt.toISOString(),
+      };
     });
 
-    return customers.map(user => ({
+    return {
+      data: convertToPlainObject(formattedOrders),
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: Number(page),
+      totalCount
+    };
+  } catch (error) {
+    console.error("Admin Orders Error:", error);
+    return { data: [], totalPages: 1, currentPage: 1, totalCount: 0 };
+  }
+}
+
+// 4. Paginated Customers for Admin
+export async function getAdminCustomersPaginated({ page = 1, limit = 10, search = "" }) {
+  try {
+    const skip = (Number(page) - 1) * limit;
+    
+    let whereCondition = { role: 'CUSTOMER' };
+    if (search) {
+      whereCondition.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [customers, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: { _count: { select: { orders: true } } }
+      }),
+      prisma.user.count({ where: whereCondition })
+    ]);
+
+    const formattedCustomers = customers.map(user => ({
       id: user.id,
       name: user.name || "Guest User",
       email: user.email,
       joinedAt: user.createdAt.toISOString(),
-      totalOrders: user._count.orders 
+      totalOrders: user._count.orders
     }));
+
+    return {
+      data: convertToPlainObject(formattedCustomers),
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: Number(page),
+      totalCount
+    };
   } catch (error) {
-    console.error("Fetch Customers Error:", error);
-    return [];
+    console.error("Admin Customers Error:", error);
+    return { data: [], totalPages: 1, currentPage: 1, totalCount: 0 };
   }
 }
-
 
 
 export async function getAnalyticsData() {

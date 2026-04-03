@@ -1,18 +1,20 @@
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
-  return new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  })
+  return new PrismaClient(
+  //   {
+  //   datasources: {
+  //     db: {
+  //       url: process.env.DATABASE_URL,
+  //     },
+  //   },
+  // }
+)
 }
 
 const globalForPrisma = global
 
-const prisma = globalForPrisma.prisma || prismaClientSingleton()
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
 
 export default prisma
 

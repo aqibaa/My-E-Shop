@@ -1,18 +1,55 @@
 'use server'
 
 import { revalidatePath } from "next/cache";
-
 import prisma from "../db";
 import { convertToPlainObject } from "@/lib/utils";
 
 
-// sare product dikhany k liye 
+export async function getAllProducts({ query = "", category = "", limit = 12, page = 1 } = {}) {
+  try {
+    let whereCondition = {};
 
-export async function getAllProducts() {
-  const data = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
-  return convertToPlainObject(data);
+    if (category && category !== "All" && category !== "all") {
+      whereCondition.category = {
+        equals: category,
+        mode: 'insensitive'
+      };
+    }
+
+    if (query && query.trim() !== "") {
+      whereCondition.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { brand: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * limit;
+
+    const data = await prisma.product.findMany({
+      where: Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+      orderBy: { createdAt: 'desc' },
+      skip: skip,
+      take: limit
+    });
+
+    const totalCount = await prisma.product.count({
+      where: Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data: convertToPlainObject(data),
+      totalPages: totalPages,
+      currentPage: Number(page)
+    };
+  } catch (error) {
+    console.error("Database connection error in getAllProducts:", error);
+    return { data: [], totalPages: 1, currentPage: 1 };
+  }
 }
-//sari categories k liye 
+
 export async function getAllCategories() {
   const data = await prisma.product.findMany({
     select: {
@@ -66,9 +103,9 @@ export async function createProduct(formData) {
         stock: parseInt(formData.stock),
         images: formData.images,
         isFeatured: formData.isFeatured || false,
-        colors: [],
-        sizes: [],
-        features: []
+        colors: formData.colors,
+        sizes: formData.sizes,
+        features: formData.features
       }
     });
     revalidatePath("/admin/products");
@@ -93,7 +130,7 @@ export async function deleteProduct(id) {
       throw new Error(`Cannot delete! This product is linked to ${orderItemsCount} past order(s). Please mark it out of stock instead.`);
     }
 
-     await prisma.product.delete({
+    await prisma.product.delete({
       where: { id: id }
     });
 
@@ -106,7 +143,6 @@ export async function deleteProduct(id) {
   }
 }
 
-//  Get Product By ID (Edit page ke liye zaroori)
 export async function getProductById(id) {
   try {
     const product = await prisma.product.findUnique({
@@ -119,20 +155,25 @@ export async function getProductById(id) {
   }
 }
 
-//  Update Product Function
 export async function updateProduct(id, formData) {
   try {
     const updatedProduct = await prisma.product.update({
       where: { id: id },
       data: {
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
-        originalPrice: formData.originalPrice,
-        category: formData.category,
-        brand: formData.brand,
-        stock: formData.stock,
-        images: formData.images,
+        name:          formData.name,
+        description:   formData.description,
+        brand:         formData.brand,
+        category:      formData.category,
+        price:         formData.price,
+        originalPrice: formData.originalPrice ?? null,
+        stock:         formData.stock,
+
+        // ✅ these were missing before
+        features: formData.features,      // String[]
+        sizes:    formData.sizes,         // String[]
+        image:    formData.image,         // String
+        images:   formData.images,        // String[]
+        colors:   formData.colors,        // Json
       }
     });
 

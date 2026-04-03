@@ -1,3 +1,4 @@
+export const revalidate = 3600;
 import { getAllProducts } from "@/lib/actions/product.actions"
 import AllProductsClient from "@/components/shared/all-products-client"
 
@@ -6,12 +7,26 @@ export const metadata = {
   description: 'Browse our latest collection of premium products.'
 }
 
-export default async function ProductsPage() {
-  // 1. Database se products fetch karein
-  const products = await getAllProducts();
+export default async function ProductsPage({ searchParams }) {
 
-  // 2. Client Component ko pass karein
+  const resolvedParams = await searchParams;
+
+  const searchQuery = resolvedParams?.search || "";
+  const categoryQuery = resolvedParams?.category || "";
+
+  const pageQuery = resolvedParams?.page ? Number(resolvedParams.page) : 1;
+
+  const { data, totalPages, currentPage } = await getAllProducts({
+    query: searchQuery,
+    category: categoryQuery,
+    page: pageQuery,
+    limit: 12
+  });
+
   return (
-    <AllProductsClient products={products} />
+    <AllProductsClient
+      products={data}
+      totalPages={totalPages}
+      currentPage={currentPage} />
   )
 }

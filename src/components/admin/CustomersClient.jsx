@@ -1,17 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Search, User, Mail, Calendar, ShoppingBag } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "../ui/button"
 
-export default function CustomersClient({ customers }) {
-    const [searchTerm, setSearchTerm] = useState("")
-    const filteredCustomers = customers.filter((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+export default function CustomersClient({ customers, totalPages, currentPage, totalCount, currentSearch }) {
+    const [searchTerm, setSearchTerm] = useState(currentSearch || "")
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+
+        if (searchTerm.trim()) {
+            current.set("search", searchTerm);
+        } else {
+            current.delete("search");
+        }
+
+        current.set("page", 1); // Reset to page 1 on new search
+        router.push(`${pathname}?${current.toString()}`);
+    }
+
+    const handlePageChange = (newPage) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set("page", newPage);
+        router.push(`${pathname}?${current.toString()}`);
+    };
 
     return (
         <div className="space-y-6">
@@ -21,19 +42,25 @@ export default function CustomersClient({ customers }) {
 
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by name or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="rounded-xl pl-9 bg-white"
-                        />
-                    </div>
+                    <form onSubmit={handleSearch} className="relative w-full max-w-sm flex gap-2">
+
+                        <div className="relative w-full max-w-sm">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by name or email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="rounded-xl pl-9 bg-white"
+                            />
+                        </div>
+                        <Button type="submit" variant="secondary" className="rounded-xl">Search</Button>
+                    </form>
+
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                         <User className="size-4" /> Total: {customers.length} Customers
                     </div>
                 </div>
+
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50/50">
@@ -44,8 +71,8 @@ export default function CustomersClient({ customers }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredCustomers.length > 0 ? (
-                            filteredCustomers.map((customer) => (
+                        {customers.length > 0 ? (
+                            customers.map((customer) => (
                                 <TableRow key={customer.id}>
                                     <TableCell className="pl-5">
                                         <div className="flex items-center gap-3">
@@ -72,7 +99,7 @@ export default function CustomersClient({ customers }) {
                                         </div>
                                     </TableCell>
 
-\                                    <TableCell className="text-center">
+                                    <TableCell className="text-center">
                                         <div className="inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">
                                             <ShoppingBag className="size-3 text-gray-500" />
                                             {customer.totalOrders}
@@ -89,6 +116,29 @@ export default function CustomersClient({ customers }) {
                         )}
                     </TableBody>
                 </Table>
+
+                <div className="flex items-center justify-between p-5 text-xs text-muted-foreground border-t bg-gray-50/50">
+                    <span>
+                        Showing page {currentPage} of {totalPages} ({customers.length} items on this page)
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline" size="sm" className="rounded-xl"
+                            disabled={currentPage <= 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline" size="sm" className="rounded-xl"
+                            disabled={currentPage >= totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+
             </div>
         </div>
     )

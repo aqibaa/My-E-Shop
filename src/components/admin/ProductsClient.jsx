@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Search, Plus, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,19 +10,60 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Image from "next/image"
 import Link from "next/link"
 import { deleteProduct } from "@/lib/actions/product.actions"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 
 
 
-export default function ProductsClient({ data }) {
-    const [searchTerm, setSearchTerm] = useState("")
-    const router = useRouter()
 
-    const filteredProducts = data.filter((p) =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+export default function ProductsClient({ data, totalPages, currentPage, totalCount, currentSearch }) {
+    const [searchTerm, setSearchTerm] = useState(currentSearch || "")
+    const router = useRouter()
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+
+
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return (...args) => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func(...args);
+            }, delay);
+        };
+    };
+
+    const updateUrl = useCallback(
+        debounce((value) => {
+            const current = new URLSearchParams(Array.from(searchParams.entries()));
+
+            if (value.trim() !== "") {
+                current.set("search", value.trim());
+            } else {
+                current.delete("search");
+            }
+
+            current.set("page", "1");
+
+            router.push(`${pathname}?${current.toString()}`);
+        }, 500),
+        [searchParams, pathname, router]
+    );
+
+    const handleInputChange = (e) => {
+        const val = e.target.value;
+        setSearchTerm(val); 
+        updateUrl(val);    
+    };
+
+
+
+    const handlePageChange = (newPage) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set("page", newPage);
+        router.push(`${pathname}?${current.toString()}`);
+    };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
@@ -51,17 +92,19 @@ export default function ProductsClient({ data }) {
 
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
+
                     <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Search products..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={handleInputChange}
                             className="rounded-xl pl-9 bg-white"
+                            autoComplete="off"
                         />
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        Total: {data.length} Products
+                        Total: {totalCount} Products
                     </div>
                 </div>
 
@@ -77,7 +120,7 @@ export default function ProductsClient({ data }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredProducts.map((product) => (
+                        {data.map((product) => (
                             <TableRow key={product.id}>
                                 <TableCell className="pl-5">
                                     <div className="relative size-12 rounded-lg overflow-hidden bg-secondary border">
@@ -90,7 +133,7 @@ export default function ProductsClient({ data }) {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <p className="font-medium text-foreground line-clamp-1 max-w-[250px]">{product.name}</p>
+                                    <p className="font-medium text-foreground line-clamp-1 max-w-62.5">{product.name}</p>
                                     <p className="text-xs text-muted-foreground">ID: {product.id.slice(-6).toUpperCase()}</p>
                                 </TableCell>
 
@@ -143,11 +186,32 @@ export default function ProductsClient({ data }) {
                     </TableBody>
                 </Table>
 
-                {filteredProducts.length === 0 && (
+                {data.length === 0 &&  (
                     <div className="p-10 text-center text-muted-foreground">
                         No products found matching your search.
                     </div>
                 )}
+                <div className="flex items-center justify-between p-5 text-xs text-muted-foreground border-t">
+                    <span>
+                        Showing page {currentPage} of {totalPages} ({data.length} items on this page)
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline" size="sm" className="rounded-xl"
+                            disabled={currentPage <= 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline" size="sm" className="rounded-xl"
+                            disabled={currentPage >= totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     )

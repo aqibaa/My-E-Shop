@@ -30,7 +30,6 @@ export default function AdminSidebar() {
         <nav className="flex flex-col gap-1">
           {sidebarLinks.map((link) => {
             const Icon = link.icon
-            // Active logic: Agar exact match ho (Overview) YA start hota ho (jaise /admin/products)
             const isActive = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href))
             
             return (

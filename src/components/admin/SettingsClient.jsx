@@ -8,33 +8,30 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
+import { updateStoreSettings } from "@/lib/actions/setting.actions"
 
-// note abhi yh page demi data say bnaya h kl me isko complete kr dyn ga inshAllah
-
-export default function SettingsClient() {
+export default function SettingsClient({initialData}) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isMaintenance, setIsMaintenance] = useState(initialData?.isMaintenance || false)
 
-  // Default values set ki hain jo inputs mein pehle se bhari hongi
   const { register, handleSubmit } = useForm({
     defaultValues: {
-      storeName: "My E-Shop",
-      supportEmail: "support@myeshop.com",
-      taxRate: "8",
-      shippingCost: "15",
+      storeName: initialData?.storeName || "",
+      supportEmail: initialData?.supportEmail || "",
+      taxRate: initialData?.taxRate || 0,
+      shippingCost: initialData?.shippingCost || 0,
     }
   })
 
-  const onSubmit = async (data) => {
+   const onSubmit = async (data) => {
     setIsLoading(true)
     try {
-      // Yahan actual API call aayegi future mein
-      // await updateStoreSettings(data);
+      await updateStoreSettings({
+          ...data,
+          isMaintenance: isMaintenance
+      });
       
-      // Fake delay take loading animation show ho (1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      
-      console.log("Saved Settings:", data)
-      toast.success("Settings updated successfully!")
+      toast.success("Settings updated successfully! Changes applied globally.")
     } catch (error) {
       toast.error("Failed to update settings.")
     } finally {
@@ -99,23 +96,31 @@ export default function SettingsClient() {
           </div>
         </div>
 
-        <div className="bg-red-50/50 rounded-2xl border border-red-100 shadow-sm p-6 sm:p-8">
+           <div className={`rounded-2xl border shadow-sm p-6 sm:p-8 transition-colors ${isMaintenance ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
           <div className="flex items-center gap-3 mb-4">
-             <div className="bg-red-100 text-red-600 p-2 rounded-xl"><AlertTriangle className="w-5 h-5" /></div>
-             <h2 className="text-lg font-semibold text-red-800">Danger Zone</h2>
+             <div className={`${isMaintenance ? 'bg-red-100 text-red-600' : 'bg-gray-200 text-gray-600'} p-2 rounded-xl`}><AlertTriangle className="w-5 h-5" /></div>
+             <h2 className={`text-lg font-semibold ${isMaintenance ? 'text-red-800' : 'text-gray-800'}`}>Maintenance Mode</h2>
           </div>
-          <Separator className="bg-red-100 mb-4" />
+          <Separator className={isMaintenance ? 'bg-red-100 mb-4' : 'bg-gray-200 mb-4'} />
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
              <div>
-                 <p className="font-medium text-foreground">Maintenance Mode</p>
-                 <p className="text-sm text-muted-foreground">Temporarily disable checkout for all users.</p>
+                 <p className="font-medium text-foreground">
+                    Status: {isMaintenance ? <span className="text-red-600 font-bold">Active</span> : <span className="text-green-600 font-bold">Inactive</span>}
+                 </p>
+                 <p className="text-sm text-muted-foreground mt-1">If active, normal users will not be able to checkout.</p>
              </div>
-             <Button type="button" variant="destructive" className="rounded-xl">
-                 Enable Maintenance
+             <Button 
+                type="button" 
+                variant={isMaintenance ? "outline" : "destructive"} 
+                className={`rounded-xl ${isMaintenance ? 'border-red-200 text-red-600 hover:bg-red-100' : ''}`}
+                onClick={() => setIsMaintenance(!isMaintenance)} // Toggle Function
+             >
+                 {isMaintenance ? "Disable Maintenance" : "Enable Maintenance"}
              </Button>
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex justify-end pt-4">
            <Button type="submit" size="lg" disabled={isLoading} className="rounded-xl px-8 h-12 text-md">
               {isLoading ? (
@@ -125,7 +130,6 @@ export default function SettingsClient() {
               )}
            </Button>
         </div>
-
       </form>
     </div>
   )

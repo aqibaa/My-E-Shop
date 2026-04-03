@@ -12,7 +12,7 @@ import { toast } from "sonner"
 
 
 function ProductCard({ product }) {
-  const  addItem  = useCartStore((state) => (state.addItem));
+  const addItem = useCartStore((state) => (state.addItem));
   const { toggleWishlist, items } = useWishlistStore();
   const isLiked = items.some((item) => item.id === product.id)
 
@@ -39,6 +39,8 @@ function ProductCard({ product }) {
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
+
+    
 
   return (
     <div className="group relative flex flex-col">

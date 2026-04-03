@@ -82,15 +82,40 @@ export async function getUserOrders() {
   return orders;
 }
 
+
+
 export async function getOrderById(orderId) {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      orderItems: true,
-    },
-  });
-  return order;
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        orderItems: true,
+      },
+    });
+
+    if (!order) return null;
+
+    // THE FIX: Convert all Decimals to regular Numbers before sending to frontend
+    return {
+      ...order,
+      itemsPrice: Number(order.itemsPrice),
+      shippingPrice: Number(order.shippingPrice),
+      taxPrice: Number(order.taxPrice),
+      totalPrice: Number(order.totalPrice),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      orderItems: order.orderItems.map(item => ({
+        ...item,
+        price: Number(item.price)
+      }))
+    };
+  } catch (error) {
+    console.error("Error fetching order by ID:", error);
+    return null;
+  }
 }
+
+
 
 export async function getAllAdminOrders() {
   try {

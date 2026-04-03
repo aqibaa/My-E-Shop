@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
+
 import {
   Accordion,
   AccordionContent,
@@ -33,6 +34,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import ProductImageZoom from "./ProductImageZoom"
 import ProductCard from "@/components/shared/Product-card"
 import { reviewDistribution } from "@/lib/data"
 import { useCartStore } from '@/store/cart-store';
@@ -40,8 +42,7 @@ import { toast } from "sonner"
 
 
 export default function ProductPage({ product, relatedProducts }) {
-  const [quantity, setQuantity] = useState(1);
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem } = useCartStore();
 
   const { toggleWishlist, items } = useWishlistStore();
   const isLiked = items.some((item) => item.id === product.id)
@@ -49,37 +50,57 @@ export default function ProductPage({ product, relatedProducts }) {
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => setIsMounted(true), [])
 
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedColor, setSelectedColor] = useState(0)
+
+  const productColors = product.colors || [];
+  const [selectedColorIndex, setSelectedColorIndex] = useState(productColors.length > 0 ? 0 : null);
+
+  let rawImages = [];
+  if (selectedColorIndex !== null && productColors[selectedColorIndex]?.images?.length > 0) {
+    rawImages = productColors[selectedColorIndex].images;
+  } else if (product.images && product.images.length > 0) {
+    rawImages = product.images;
+  } else {
+    rawImages = [product.image]; 
+  }
+
+   const handleColorClick = (index) => {
+    setSelectedColorIndex(index);
+    setCurrentImageIndex(0); 
+  };
+
+  const activeImages = rawImages.filter(img => img && typeof img === 'string' && img.trim() !== "");
+
+  if (activeImages.length === 0) {
+    activeImages.push("/placeholder.jpg");
+  }
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const productSizes = product.sizes || []
   const [selectedSize, setSelectedSize] = useState(
     productSizes.length > 0 ? productSizes[0] : null
   )
+  const [quantity, setQuantity] = useState(1)
 
+  const handleAddToCart = () => {
+    const finalColorName = selectedColorIndex !== null && productColors.length > 0
+      ? productColors[selectedColorIndex].name
+      : null;
 
-  useEffect(() => {
-    setSelectedImage(0)
-    setSelectedColor(0)
-    setSelectedSize(product.sizes?.length > 0 ? product.sizes[0] : null)
-    setQuantity(1)
-  }, [product])
+    const finalImage = activeImages.length > 0
+      ? activeImages[0]
+      : (product.image || "/placeholder.jpg");
+
+    addItem(product, quantity, finalColorName, selectedSize, finalImage);
+
+    toast.success(`Added ${quantity} ${product.name} to cart!`);
+  }
+
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-
-  const handleAddToCart = () => {
-    addItem(product, quantity);
-    toast(`${quantity} items added to cart!`)
-  };
-
-
-  const productColors = product.colors || []
-  const productImages = product.images && product.images.length > 0
-    ? product.images
-    : [product.image || "/placeholder.jpg"]
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
@@ -103,37 +124,20 @@ export default function ProductPage({ product, relatedProducts }) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
+      <div className="flex flex-col gap-10 md:flex-row lg:gap-16">
         <div className="flex flex-1 flex-col gap-4">
-          <div className="relative aspect-square overflow-hidden rounded-2xl bg-secondary">
-            <Image
-              src={productImages[selectedImage]}
+          <div className="relative aspect-square  rounded-2xl bg-secondary">
+            <ProductImageZoom
+              images={activeImages} 
               alt={product.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              currentIndex={currentImageIndex}
+              setCurrentIndex={setCurrentImageIndex}
             />
             {product.badge && (
               <Badge className="absolute left-4 top-4 rounded-lg bg-foreground text-background text-xs">
                 {product.badge}
               </Badge>
             )}
-          </div>
-
-          <div className="flex gap-3">
-            {product.images.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedImage(i)}
-                className={`relative size-20 overflow-hidden rounded-xl border-2 transition-all ${selectedImage === i
-                  ? "border-foreground"
-                  : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
-              >
-                <Image src={img} alt={`View ${i + 1}`} fill className="object-cover" sizes="80px" />
-              </button>
-            ))}
           </div>
         </div>
 
@@ -160,7 +164,7 @@ export default function ProductPage({ product, relatedProducts }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center flex-wrap gap-3">
               <span className="text-2xl font-bold text-foreground">
                 ${Number(product.price).toFixed(2)}
               </span>
@@ -189,20 +193,20 @@ export default function ProductPage({ product, relatedProducts }) {
               <span className="text-sm font-medium text-foreground">
                 Color:{" "}
                 <span className="font-normal text-muted-foreground">
-                  {productColors[selectedColor]}
+                  {productColors[selectedColorIndex]?.name}
                 </span>
               </span>
               <div className="flex items-center gap-2">
-                {productColors.map((color, i) => (
+                {productColors.map((colorObj, i) => (
                   <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(i)}
-                    className={`size-9 rounded-full border-2 transition-all ${selectedColor === i
+                    key={i}
+                    onClick={() => handleColorClick(i)}
+                    className={`size-10 rounded-full cursor-pointer border-2 transition-all ${selectedColorIndex === i
                       ? "border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background"
                       : "border-border"
                       }`}
-                    style={{ backgroundColor: color }}
-                    aria-label={color.name}
+                    style={{ backgroundColor: colorObj.colorCode || '#ccc' }}
+                    aria-label={colorObj.name}
                   />
                 ))}
               </div>
@@ -217,7 +221,7 @@ export default function ProductPage({ product, relatedProducts }) {
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`flex h-10 min-w-12 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-all ${selectedSize === size
+                    className={`flex h-10 min-w-12 items-center cursor-pointer justify-center rounded-xl border px-3 text-sm font-medium transition-all ${selectedSize === size
                       ? "border-foreground bg-foreground text-background"
                       : "border-border text-foreground hover:border-foreground"
                       }`}
@@ -236,7 +240,7 @@ export default function ProductPage({ product, relatedProducts }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-l-xl rounded-r-none"
+                  className="rounded-l-xl rounded-r-none cursor-pointer"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   aria-label="Decrease quantity"
                 >
@@ -248,7 +252,7 @@ export default function ProductPage({ product, relatedProducts }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-l-none rounded-r-xl"
+                  className="rounded-l-none rounded-r-xl cursor-pointer"
                   onClick={() => setQuantity(quantity + 1)}
                   aria-label="Increase quantity"
                 >
@@ -260,14 +264,14 @@ export default function ProductPage({ product, relatedProducts }) {
             <div className="flex gap-3">
               <Button size="lg"
                 onClick={handleAddToCart}
-                className="flex-1 rounded-xl text-base">
+                className="flex-1 rounded-xl text-base cursor-pointer">
                 <ShoppingBag className="mr-2 size-5" />
                 Add to Cart
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-xl"
+                className="rounded-xl cursor-pointer"
                 onClick={() => toggleWishlist(product)}
                 aria-label={isMounted && isLiked ? "Remove from wishlist" : "Add to wishlist"}
               >
@@ -276,7 +280,7 @@ export default function ProductPage({ product, relatedProducts }) {
               </Button>
             </div>
 
-            <Button variant="secondary" size="lg" className="w-full rounded-xl text-base">
+            <Button variant="secondary" size="lg" className="w-full rounded-xl text-base cursor-pointer">
               <Zap className="mr-2 size-5" />
               Buy Now
             </Button>
@@ -300,15 +304,27 @@ export default function ProductPage({ product, relatedProducts }) {
 
           <Accordion type="single" collapsible defaultValue="description">
             <AccordionItem value="description">
-              <AccordionTrigger>Description</AccordionTrigger>
+              <AccordionTrigger className="cursor-pointer">Description</AccordionTrigger>
               <AccordionContent>
-                <p className="leading-relaxed text-muted-foreground">
+                <p className="leading-relaxed text-muted-foreground cursor-pointer">
                   {product.description}
                 </p>
               </AccordionContent>
             </AccordionItem>
+            {product.features && product.features.length > 0 && (
+              <AccordionItem value="Key Features">
+                <AccordionTrigger className="cursor-pointer">Key Features  </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                    {product.features.map((feature, index) => (
+                      <li key={index}>{feature}</li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            )}
             <AccordionItem value="shipping">
-              <AccordionTrigger>Shipping Information</AccordionTrigger>
+              <AccordionTrigger className="cursor-pointer">Shipping Information</AccordionTrigger>
               <AccordionContent>
                 <div className="flex flex-col gap-2 text-muted-foreground">
                   <p>Free standard shipping on all orders over $100.</p>
@@ -318,7 +334,7 @@ export default function ProductPage({ product, relatedProducts }) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="returns">
-              <AccordionTrigger>Returns & Exchanges</AccordionTrigger>
+              <AccordionTrigger className="cursor-pointer">Returns & Exchanges</AccordionTrigger>
               <AccordionContent>
                 <div className="flex flex-col gap-2 text-muted-foreground">
                   <p>30-day hassle-free return policy.</p>

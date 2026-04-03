@@ -1,10 +1,8 @@
 import ProductCard from "./Product-card";
-import { getAllProducts } from "@/lib/actions/product.actions";
 
 
-export async function ProductsGrid({ title, subtitle }) {
+export async function ProductsGrid({ title, subtitle,products = []  }) {
 
-  const products = await getAllProducts();
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 lg:px-6 lg:py-20">

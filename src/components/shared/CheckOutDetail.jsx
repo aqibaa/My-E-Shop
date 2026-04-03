@@ -15,6 +15,7 @@ import { useCartStore } from "@/store/cart-store"
 import { useCheckoutStore } from "@/store/checkout-store";
 import { createOrder } from "@/lib/actions/order.actions"
 import { toast } from "sonner"
+import { AlertTriangle } from "lucide-react"
 
 const steps = [
   { id: 1, label: "Shipping", icon: MapPin },
@@ -22,7 +23,7 @@ const steps = [
   { id: 3, label: "Review", icon: ClipboardList },
 ]
 
-export default function CheckOutDetail() {
+export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance }) {
   const router = useRouter()
   const { isLoaded, isSignedIn, user } = useUser() // Clerk Auth State
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,6 +56,23 @@ export default function CheckOutDetail() {
 
   if (!isMounted) return null
 
+  if (isMaintenance) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center px-4">
+        <div className="bg-red-50 p-4 rounded-full mb-4 text-red-600">
+          <AlertTriangle className="w-12 h-12" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Checkout is temporarily disabled</h2>
+        <p className="text-muted-foreground mt-2 max-w-md">
+          Our store is currently undergoing maintenance. Please try completing your purchase later.
+        </p>
+        <Link href="/products" className="mt-8">
+          <Button variant="outline">Back to Store</Button>
+        </Link>
+      </div>
+    )
+  }
+
   if (isLoaded && !isSignedIn) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-6 text-center px-4">
@@ -76,9 +94,10 @@ export default function CheckOutDetail() {
     (sum, item) => sum + (Number(item.price) * item.quantity),
     0
   )
-  const shipping = subtotal > 100 ? 0 : 15
-  const tax = subtotal * 0.08
-  const total = subtotal + shipping + tax
+
+  const actualShipping = subtotal > 100 ? 0 : Number(shippingCost);
+  const actualTax = Number(((subtotal * Number(taxRate)) / 100).toFixed(2));
+  const total = subtotal + actualShipping + actualTax;
 
   const handleNextStep = async () => {
     const isValid = await trigger();
@@ -86,14 +105,12 @@ export default function CheckOutDetail() {
     if (isValid) {
       const formData = getValues();
       saveAddress(formData);
-      setStep(2);                   //
+      setStep(2);
     } else {
       toast.error("Please fill in all required fields.");
     }
   }
 
-
-  // Place Order Logic
   const onPlaceOrder = async () => {
     setIsSubmitting(true)
     try {
@@ -104,8 +121,8 @@ export default function CheckOutDetail() {
         shippingAddress: finalShippingAddress,
         paymentMethod: 'Credit Card',
         itemsPrice: subtotal,
-        shippingPrice: shipping,
-        taxPrice: tax,
+        shippingPrice: actualShipping,
+        taxPrice: actualTax,
         totalPrice: total,
       }
 
@@ -139,7 +156,6 @@ export default function CheckOutDetail() {
         Checkout
       </h1>
 
-      {/* Steps UI */}
       <div className="mb-10 flex items-center justify-center">
         {steps.map((step, i) => {
           const Icon = step.icon
@@ -167,7 +183,6 @@ export default function CheckOutDetail() {
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
         <div className="flex-1">
 
-          {/* STEP 1: SHIPPING FORM */}
           {currentStep === 1 && (
             <div className="rounded-2xl border border-border bg-card p-6">
               <h2 className="mb-6 text-lg font-semibold text-foreground">Shipping Address</h2>
@@ -212,7 +227,7 @@ export default function CheckOutDetail() {
             </div>
           )}
 
-          {/* STEP 2: PAYMENT */}
+
           {currentStep === 2 && (
             <div className="rounded-2xl border border-border bg-card p-6">
               <h2 className="mb-6 text-lg font-semibold text-foreground">Payment Method</h2>
@@ -240,7 +255,7 @@ export default function CheckOutDetail() {
             </div>
           )}
 
-          {/* STEP 3: REVIEW */}
+
           {currentStep === 3 && (
             <div className="rounded-2xl border border-border bg-card p-6">
               <h2 className="mb-6 text-lg font-semibold text-foreground">Review Your Order</h2>
@@ -255,7 +270,7 @@ export default function CheckOutDetail() {
                 </div>
               </div>
 
-              {/* Items List */}
+
               <div className="flex flex-col gap-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center gap-4">
@@ -300,20 +315,20 @@ export default function CheckOutDetail() {
               <Separator className="my-1" />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
+                <span className="font-medium text-foreground">${Number(subtotal).toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium text-foreground">{shipping === 0 ? "Free" : `$${shipping}`}</span>
+                <span className="font-medium text-foreground">{Number(actualShipping) === 0 ? "Free" : `$${Number(actualShipping).toFixed(2)}`}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tax</span>
-                <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+                <span className="text-muted-foreground">Tax({taxRate}%) </span>
+                <span className="font-medium text-foreground">${Number(actualTax).toFixed(2)}</span>
               </div>
               <Separator className="my-1" />
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-foreground">Total</span>
-                <span className="text-lg font-bold text-foreground">${total.toFixed(2)}</span>
+                <span className="text-lg font-bold text-foreground">${Number(total).toFixed(2)}</span>
               </div>
             </div>
           </div>

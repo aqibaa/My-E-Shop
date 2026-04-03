@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { SlidersHorizontal, X } from "lucide-react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
@@ -93,9 +93,11 @@ function FilterSidebar({
     )
 }
 
-export default function AllProductsClient({ products }) {
-
+export default function AllProductsClient({ products, totalPages, currentPage }) {
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('search') || "";
     const availableCategories = [...new Set(products.map(p => p.category))];
     const availableBrands = [...new Set(products.map(p => p.brand))];
 
@@ -130,6 +132,15 @@ export default function AllProductsClient({ products }) {
     }, [searchParams]);
 
     const filteredProducts = products
+        .filter((p) => {
+            if (!searchQuery) return true;
+            const lowerQuery = searchQuery.toLowerCase();
+            return (
+                p.name.toLowerCase().includes(lowerQuery) ||
+                p.brand.toLowerCase().includes(lowerQuery) ||
+                p.category.toLowerCase().includes(lowerQuery)
+            );
+        })
         .filter((p) => Number(p.price) >= priceRange[0] && Number(p.price) <= priceRange[1])
         .filter((p) => selectedBrands.length === 0 || selectedBrands.includes(p.brand))
         .filter(
@@ -152,6 +163,19 @@ export default function AllProductsClient({ products }) {
 
     const activeFilterCount =
         selectedBrands.length + selectedCategories.length + (priceRange[0] > 0 || priceRange[1] < 3000 ? 1 : 0)
+
+
+
+    const handlePageChange = (newPage) => {
+        // Naya URL banayenge purane filters ke sath
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set("page", newPage);
+
+        const search = current.toString();
+        const query = search ? `?${search}` : "";
+
+        router.push(`${pathname}${query}`);
+    };
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
@@ -276,6 +300,34 @@ export default function AllProductsClient({ products }) {
                                 onClick={resetFilters}
                             >
                                 Clear Filters
+                            </Button>
+                        </div>
+                    )}
+
+                    {totalPages > 1 && (
+                        <div className="mt-12 flex justify-center items-center gap-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl px-4"
+                                disabled={currentPage === 1}
+                                onClick={() => handlePageChange(currentPage - 1)}
+                            >
+                                Previous
+                            </Button>
+
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </span>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl px-4"
+                                disabled={currentPage === totalPages}
+                                onClick={() => handlePageChange(currentPage + 1)}
+                            >
+                                Next
                             </Button>
                         </div>
                     )}
