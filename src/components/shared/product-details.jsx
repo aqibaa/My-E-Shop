@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import ProductImageZoom from "./ProductImageZoom"
 import ProductCard from "@/components/shared/Product-card"
-import { reviewDistribution } from "@/lib/data"
 import { useCartStore } from '@/store/cart-store';
 import { toast } from "sonner"
 
@@ -53,6 +52,12 @@ export default function ProductPage({ product, relatedProducts }) {
 
   const productColors = product.colors || [];
   const [selectedColorIndex, setSelectedColorIndex] = useState(productColors.length > 0 ? 0 : null);
+
+  const productSizes = product.sizes || []
+  const [selectedSize, setSelectedSize] = useState(
+    productSizes.length > 0 ? productSizes[0] : null
+  )
+  const [quantity, setQuantity] = useState(1)
 
   let rawImages = [];
   if (selectedColorIndex !== null && productColors[selectedColorIndex]?.images?.length > 0) {
@@ -76,24 +81,38 @@ export default function ProductPage({ product, relatedProducts }) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const productSizes = product.sizes || []
-  const [selectedSize, setSelectedSize] = useState(
-    productSizes.length > 0 ? productSizes[0] : null
-  )
-  const [quantity, setQuantity] = useState(1)
 
   const handleAddToCart = () => {
-    const finalColorName = selectedColorIndex !== null && productColors.length > 0
-      ? productColors[selectedColorIndex].name
-      : null;
+    // const finalColorName = selectedColorIndex !== null && productColors.length > 0
+    //   ? productColors[selectedColorIndex].name
+    //   : null;
 
-    const finalImage = activeImages.length > 0
-      ? activeImages[0]
-      : (product.image || "/placeholder.jpg");
+    // const finalImage = activeImages.length > 0
+    //   ? activeImages[0]
+    //   : (product.image || "/placeholder.jpg");
 
-    addItem(product, quantity, finalColorName, selectedSize, finalImage);
+    // addItem(product, quantity, finalColorName, selectedSize, finalImage);
 
-    toast.success(`Added ${quantity} ${product.name} to cart!`);
+    // toast.success(`Added ${quantity} ${product.name} to cart!`);
+
+      let finalColorName = null;
+    if (selectedColorIndex !== null && productColors.length > 0) {
+        if (typeof productColors[selectedColorIndex] === 'object') {
+            finalColorName = productColors[selectedColorIndex].name;
+        } 
+        else {
+            finalColorName = productColors[selectedColorIndex];
+        }
+    }
+
+    const finalSize = selectedSize;
+
+    const finalImage = activeImages.length > 0 ? activeImages[0] : (product.image || "/placeholder.jpg");
+
+  
+    addItem(product, quantity, finalColorName, finalSize, finalImage);
+    
+    toast.success(`Added ${quantity} ${product.name} (${finalColorName || 'Standard'}) to cart!`);
   }
 
 
@@ -346,48 +365,6 @@ export default function ProductPage({ product, relatedProducts }) {
           </Accordion>
         </div>
       </div>
-
-      <section className="mt-10">
-        <h2 className="mb-8 font-serif text-2xl font-bold text-foreground">
-          Customer Reviews
-        </h2>
-        <div className="flex flex-col gap-8 lg:flex-row lg:gap-16">
-          <div className="flex flex-col items-center gap-4 lg:w-60">
-            <span className="text-5xl font-bold text-foreground">
-              {product.rating}
-            </span>
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`size-5 ${i < Math.floor(product.rating)
-                    ? "fill-foreground text-foreground"
-                    : "fill-muted text-muted"
-                    }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              Based on {product.reviewCount} reviews
-            </span>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-3">
-            {reviewDistribution.map(({ stars, percentage }) => (
-              <div key={stars} className="flex items-center gap-3">
-                <span className="w-14 text-right text-sm text-muted-foreground">
-                  {stars} stars
-                </span>
-                <Progress value={percentage} className="h-2.5 flex-1" />
-                <span className="w-10 text-sm text-muted-foreground">
-                  {percentage}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
 
       <div className="mt-10">
         {relatedProducts.length > 0 ? (

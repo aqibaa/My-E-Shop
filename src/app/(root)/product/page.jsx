@@ -13,11 +13,12 @@ export default async function ProductsPage({ searchParams }) {
 
   const searchQuery = resolvedParams?.search || "";
   const categoryQuery = resolvedParams?.category || "";
-
+  const sortQuery = resolvedParams?.sort || "newest";
   const pageQuery = resolvedParams?.page ? Number(resolvedParams.page) : 1;
 
-  const { data, totalPages, currentPage } = await getAllProducts({
+  const { data, totalPages, currentPage, availableCategories, availableBrands } = await getAllProducts({
     query: searchQuery,
+    sort: sortQuery,
     category: categoryQuery,
     page: pageQuery,
     limit: 12
@@ -27,6 +28,9 @@ export default async function ProductsPage({ searchParams }) {
     <AllProductsClient
       products={data}
       totalPages={totalPages}
-      currentPage={currentPage} />
+      currentPage={currentPage}
+      globalCategories={availableCategories} 
+       globalBrands={availableBrands}
+      />
   )
 }

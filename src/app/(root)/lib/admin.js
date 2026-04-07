@@ -1,29 +1,4 @@
 
-
-// import { auth } from "@clerk/nextjs/server";
-// import  prisma  from "@/lib/db";
-// import { redirect } from "next/navigation";
-
-// export async function checkAdmin() {
-//   const { userId } = await auth();
-
-//   if (!userId) {
-//     redirect("/sign-in");
-//   }
-
-//   // Database mein check karo ki kya ye ADMIN hai
-//   const dbUser = await prisma.user.findUnique({
-//     where: { id: userId }
-//   });
-
-//   if (!dbUser || dbUser.role !== "ADMIN") {
-//     redirect("/"); // Agar CUSTOMER hai, toh Home page pe bhej do
-//   }
-
-//   return true;
-// }
-
-
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";

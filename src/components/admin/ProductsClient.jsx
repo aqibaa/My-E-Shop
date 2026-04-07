@@ -91,7 +91,7 @@ export default function ProductsClient({ data, totalPages, currentPage, totalCou
             </div>
 
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
+                <div className="p-5 border-b flex items-center gap-3 justify-between bg-gray-50/50">
 
                     <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

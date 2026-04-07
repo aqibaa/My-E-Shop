@@ -25,7 +25,7 @@ const steps = [
 
 export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance }) {
   const router = useRouter()
-  const { isLoaded, isSignedIn, user } = useUser() // Clerk Auth State
+  const { isLoaded, isSignedIn, user } = useUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
 
@@ -119,19 +119,18 @@ export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance })
       const orderData = {
         items,
         shippingAddress: finalShippingAddress,
-        paymentMethod: 'Credit Card',
         itemsPrice: subtotal,
         shippingPrice: actualShipping,
         taxPrice: actualTax,
         totalPrice: total,
       }
 
-      const newOrder = await createOrder(orderData)
+      const result  = await createOrder(orderData)
 
-      if (newOrder) {
+      if (result && result.url) {
         clearCart()
         toast.success("Order placed successfully!")
-        router.push(`/order/${newOrder.id}`)
+        window.location.href = result.url;
       }
     } catch (error) {
       console.error(error)
@@ -228,29 +227,33 @@ export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance })
           )}
 
 
+        {/* STEP 2: PAYMENT */}
           {currentStep === 2 && (
             <div className="rounded-2xl border border-border bg-card p-6">
               <h2 className="mb-6 text-lg font-semibold text-foreground">Payment Method</h2>
+              
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label>Card Holder Name</Label>
-                  <Input placeholder="John Doe" disabled className="bg-gray-50 rounded-xl" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Card Number</Label>
-                  <Input placeholder="4242 4242 4242 4242" disabled className="bg-gray-50 rounded-xl" />
-                </div>
+                <label className="flex items-center gap-4 p-4 border-2 border-blue-600 bg-blue-50 rounded-xl cursor-pointer">
+                  <input type="radio" checked readOnly className="w-5 h-5 text-blue-600" />
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Credit / Debit Card</p>
+                    <p className="text-xs text-gray-500">Secure payment via Stripe Checkout</p>
+                  </div>
+                </label>
+
+                {/* add Cash on Delivery baad me*/}
               </div>
 
               <Separator className="my-6" />
-              <div className="flex items-center gap-3 rounded-xl bg-secondary p-4">
-                <CreditCard className="size-5 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">Demo Mode: No payment required.</p>
-              </div>
 
               <div className="mt-8 flex gap-3">
-                <Button variant="outline" size="lg" className="rounded-xl" onClick={() => setStep(1)}>Back</Button>
-                <Button size="lg" className="flex-1 rounded-xl" onClick={() => setStep(3)}>Review Order</Button>
+                <Button variant="outline" size="lg" className="rounded-xl" onClick={() => setStep(1)}>
+                  Back
+                </Button>
+                <Button size="lg" className="flex-1 rounded-xl" onClick={() => setStep(3)}>
+                  Review Order
+                </Button>
               </div>
             </div>
           )}
@@ -273,7 +276,7 @@ export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance })
 
               <div className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4">
+                  <div key={item.cartItemId || item.id} className="flex items-center gap-4">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-secondary">
                       <Image
                         src={item.images && item.images[0] ? item.images[0] : (item.image || "/placeholder.jpg")} alt={item.name}
@@ -307,7 +310,7 @@ export default function CheckOutDetail({ taxRate, shippingCost, isMaintenance })
             <h3 className="mb-4 text-sm font-semibold text-foreground">Order Summary</h3>
             <div className="flex flex-col gap-3">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm">
+                <div key={item.cartItemId || item.id} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground line-clamp-1 flex-1">{item.name} x{item.quantity}</span>
                   <span className="ml-2 font-medium text-foreground">${(Number(item.price) * item.quantity).toFixed(2)}</span>
                 </div>

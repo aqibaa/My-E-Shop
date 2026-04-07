@@ -32,7 +32,7 @@ export function FeaturedCategories() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-6">
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 sm:gap-6">
         {isLoading && categories.length === 0 && (
           Array(6).fill(0).map((_, i) => (
             <div key={i} className="h-32 rounded-2xl bg-gray-100 animate-pulse" />

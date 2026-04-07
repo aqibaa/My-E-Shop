@@ -1,42 +1,24 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { SlidersHorizontal, X } from "lucide-react"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import ProductCard from "@/components/shared/Product-card"
 import Link from "next/link"
-import { useFilterStore } from "@/store/filter-store";
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { useFilterStore } from "@/store/filter-store"
 
-
-function FilterSidebar({
-    availableCategories, availableBrands
-}) {
+function FilterSidebar({ availableCategories = [], availableBrands = [] }) {
     const {
         priceRange, setPriceRange,
         selectedBrands, toggleBrand,
@@ -93,44 +75,65 @@ function FilterSidebar({
     )
 }
 
-export default function AllProductsClient({ products, totalPages, currentPage }) {
+export default function AllProductsClient({ 
+    products = [], 
+    totalPages = 1, 
+    currentPage = 1, 
+    globalCategories = [], 
+    globalBrands = [] 
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    
     const searchQuery = searchParams.get('search') || "";
-    const availableCategories = [...new Set(products.map(p => p.category))];
-    const availableBrands = [...new Set(products.map(p => p.brand))];
+    const currentSort = searchParams.get('sort') || "newest";
 
     const {
-        priceRange,
-        setPriceRange,
-        selectedBrands,
-        toggleBrand,
-        selectedCategories,
-        toggleCategory,
-        sortBy,
-        setSortBy,
-        resetFilters
+        priceRange, setPriceRange,
+        selectedBrands, toggleBrand,
+        selectedCategories, toggleCategory,
+        resetFilters,
     } = useFilterStore();
 
+    // 1. HANDLE SORT CHANGE (Updates URL)
+    const handleSortChange = (newSortValue) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set("sort", newSortValue);
+        current.set("page", "1"); 
+        router.push(`${pathname}?${current.toString()}`);
+    };
 
+    const handleClearFilters = () => {
+        resetFilters(); 
+        router.push(pathname);
+    };
+
+    const handlePageChange = (newPage) => {
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set("page", newPage);
+        const search = current.toString();
+        const query = search ? `?${search}` : "";
+        router.push(`${pathname}${query}`);
+    };
+
+   
     useEffect(() => {
         const categoryParam = searchParams.get('category');
         if (categoryParam) {
-
-            const matchedCategory = availableCategories.find(
+            const matchedCategory = globalCategories.find(
                 c => c.toLowerCase() === categoryParam.toLowerCase()
             );
 
             if (matchedCategory) {
-                resetFilters();
                 if (!selectedCategories.includes(matchedCategory)) {
                     toggleCategory(matchedCategory);
                 }
             }
         }
-    }, [searchParams]);
+    }, [searchParams, globalCategories, selectedCategories, toggleCategory]);
 
+    
     const filteredProducts = products
         .filter((p) => {
             if (!searchQuery) return true;
@@ -143,48 +146,28 @@ export default function AllProductsClient({ products, totalPages, currentPage })
         })
         .filter((p) => Number(p.price) >= priceRange[0] && Number(p.price) <= priceRange[1])
         .filter((p) => selectedBrands.length === 0 || selectedBrands.includes(p.brand))
-        .filter(
-            (p) =>
-                selectedCategories.length === 0 ||
-                selectedCategories.includes(p.category)
-        )
+        .filter((p) => selectedCategories.length === 0 || selectedCategories.includes(p.category))
         .sort((a, b) => {
-            switch (sortBy) {
-                case "price-asc":
+            switch (currentSort) {
+                case "lowest": 
                     return Number(a.price) - Number(b.price)
-                case "price-desc":
+                case "highest":
                     return Number(b.price) - Number(a.price)
                 case "rating":
                     return Number(b.rating) - Number(a.rating)
-                default:
-                    return 0
+                default: 
+                    return 0; 
             }
-        })
+        });
 
-    const activeFilterCount =
-        selectedBrands.length + selectedCategories.length + (priceRange[0] > 0 || priceRange[1] < 3000 ? 1 : 0)
-
-
-
-    const handlePageChange = (newPage) => {
-        // Naya URL banayenge purane filters ke sath
-        const current = new URLSearchParams(Array.from(searchParams.entries()));
-        current.set("page", newPage);
-
-        const search = current.toString();
-        const query = search ? `?${search}` : "";
-
-        router.push(`${pathname}${query}`);
-    };
+    const activeFilterCount = selectedBrands.length + selectedCategories.length + (priceRange[0] > 0 || priceRange[1] < 3000 ? 1 : 0);
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
             <Breadcrumb className="mb-6">
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                            <Link href="/">Home</Link>
-                        </BreadcrumbLink>
+                        <BreadcrumbLink asChild><Link href="/">Home</Link></BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
@@ -199,14 +182,14 @@ export default function AllProductsClient({ products, totalPages, currentPage })
                     <div className="sticky top-36">
                         <h2 className="mb-6 text-lg font-semibold text-foreground">Filters</h2>
                         <FilterSidebar
-
-                            availableCategories={availableCategories}
-                            availableBrands={availableBrands}
+                            availableCategories={globalCategories} 
+                            availableBrands={globalBrands}         
                         />
                     </div>
                 </aside>
 
                 <div className="flex-1">
+                    {/* Toolbar */}
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <Sheet>
@@ -217,71 +200,45 @@ export default function AllProductsClient({ products, totalPages, currentPage })
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent side="left" className="w-80 overflow-y-auto">
-                                    <SheetHeader>
-                                        <SheetTitle>Filters</SheetTitle>
-                                    </SheetHeader>
+                                    <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
                                     <div className="px-4 pt-6">
                                         <FilterSidebar
-                                            availableCategories={availableCategories}
-                                            availableBrands={availableBrands}
+                                            availableCategories={globalCategories}
+                                            availableBrands={globalBrands}
                                         />
                                     </div>
                                 </SheetContent>
                             </Sheet>
-
                             <p className="text-sm text-muted-foreground">
-                                <span className="font-medium text-foreground">
-                                    {filteredProducts.length}
-                                </span>{" "}
-                                products
+                                <span className="font-medium text-foreground">{filteredProducts.length}</span> products
                             </p>
                         </div>
-
-                        <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-44 rounded-xl">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
+                        
+                        <Select value={currentSort} onValueChange={handleSortChange}>
+                            <SelectTrigger className="w-44 rounded-xl"><SelectValue placeholder="Sort by" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="featured">Featured</SelectItem>
-                                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                                <SelectItem value="newest">Newest Arrivals</SelectItem>
+                                <SelectItem value="lowest">Price: Low to High</SelectItem>
+                                <SelectItem value="highest">Price: High to Low</SelectItem>
                                 <SelectItem value="rating">Highest Rated</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
+                    {/* Active Filters */}
                     {activeFilterCount > 0 && (
                         <div className="mb-6 flex flex-wrap items-center gap-2">
                             {selectedCategories.map((cat) => (
-                                <Button
-                                    key={cat}
-                                    variant="secondary"
-                                    size="sm"
-                                    className="rounded-full"
-                                    onClick={() => toggleCategory(cat)}
-                                >
-                                    {cat}
-                                    <X className="ml-1 size-3" />
+                                <Button key={cat} variant="secondary" size="sm" className="rounded-full" onClick={() => toggleCategory(cat)}>
+                                    {cat} <X className="ml-1 size-3" />
                                 </Button>
                             ))}
                             {selectedBrands.map((brand) => (
-                                <Button
-                                    key={brand}
-                                    variant="secondary"
-                                    size="sm"
-                                    className="rounded-full"
-                                    onClick={() => toggleBrand(brand)}
-                                >
-                                    {brand}
-                                    <X className="ml-1 size-3" />
+                                <Button key={brand} variant="secondary" size="sm" className="rounded-full" onClick={() => toggleBrand(brand)}>
+                                    {brand} <X className="ml-1 size-3" />
                                 </Button>
                             ))}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={resetFilters}>
-                                Clear all
-                            </Button>
+                            <Button variant="ghost" size="sm" onClick={handleClearFilters}>Clear all</Button>
                         </div>
                     )}
 
@@ -294,35 +251,31 @@ export default function AllProductsClient({ products, totalPages, currentPage })
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <p className="text-lg font-medium text-foreground">No products found</p>
-                            <p className="text-sm text-muted-foreground">Category: {searchParams.get('category')}</p>
-                            <Button
-                                variant="link"
-                                onClick={resetFilters}
-                            >
-                                Clear Filters
-                            </Button>
+                            <p className="text-sm text-muted-foreground">Try adjusting your filters</p>
+                            <Button variant="link" onClick={handleClearFilters}>Clear Filters</Button>
                         </div>
                     )}
 
+                    {/* PAGINATION  */}
                     {totalPages > 1 && (
                         <div className="mt-12 flex justify-center items-center gap-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
                                 className="rounded-xl px-4"
-                                disabled={currentPage === 1}
+                                disabled={currentPage <= 1}
                                 onClick={() => handlePageChange(currentPage - 1)}
                             >
                                 Previous
                             </Button>
-
+                            
                             <span className="text-sm font-medium text-muted-foreground">
                                 Page {currentPage} of {totalPages}
                             </span>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
+                            
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
                                 className="rounded-xl px-4"
                                 disabled={currentPage === totalPages}
                                 onClick={() => handlePageChange(currentPage + 1)}

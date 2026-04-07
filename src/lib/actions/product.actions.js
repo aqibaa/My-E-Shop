@@ -5,7 +5,7 @@ import prisma from "../db";
 import { convertToPlainObject } from "@/lib/utils";
 
 
-export async function getAllProducts({ query = "", category = "", limit = 12, page = 1 } = {}) {
+export async function getAllProducts({ query = "", category = "", sort = "newest", limit = 12, page = 1 } = {}) {
   try {
     let whereCondition = {};
 
@@ -24,11 +24,21 @@ export async function getAllProducts({ query = "", category = "", limit = 12, pa
       ];
     }
 
+    let orderByCondition = { createdAt: 'desc' }; // Default is newest
+
+    if (sort === "lowest") {
+      orderByCondition = { price: 'asc' };
+    } else if (sort === "highest") {
+      orderByCondition = { price: 'desc' };
+    } else if (sort === "rating") {
+      orderByCondition = { rating: 'desc' };
+    }
+
     const skip = (Number(page) - 1) * limit;
 
     const data = await prisma.product.findMany({
       where: Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
-      orderBy: { createdAt: 'desc' },
+      orderBy: orderByCondition,
       skip: skip,
       take: limit
     });
@@ -37,12 +47,24 @@ export async function getAllProducts({ query = "", category = "", limit = 12, pa
       where: Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
     });
 
+    const allCategories = await prisma.product.findMany({
+      select: { category: true },
+      distinct: ['category'],
+    });
+
+    const allBrands = await prisma.product.findMany({
+      select: { brand: true },
+      distinct: ['brand'],
+    });
+
     const totalPages = Math.ceil(totalCount / limit);
 
     return {
       data: convertToPlainObject(data),
       totalPages: totalPages,
-      currentPage: Number(page)
+      currentPage: Number(page),
+      availableCategories: allCategories.map(c => c.category).filter(Boolean),
+      availableBrands: allBrands.map(b => b.brand).filter(Boolean)
     };
   } catch (error) {
     console.error("Database connection error in getAllProducts:", error);
@@ -160,20 +182,20 @@ export async function updateProduct(id, formData) {
     const updatedProduct = await prisma.product.update({
       where: { id: id },
       data: {
-        name:          formData.name,
-        description:   formData.description,
-        brand:         formData.brand,
-        category:      formData.category,
-        price:         formData.price,
+        name: formData.name,
+        description: formData.description,
+        brand: formData.brand,
+        category: formData.category,
+        price: formData.price,
         originalPrice: formData.originalPrice ?? null,
-        stock:         formData.stock,
+        stock: formData.stock,
 
         // ✅ these were missing before
         features: formData.features,      // String[]
-        sizes:    formData.sizes,         // String[]
-        image:    formData.image,         // String
-        images:   formData.images,        // String[]
-        colors:   formData.colors,        // Json
+        sizes: formData.sizes,         // String[]
+        image: formData.image,         // String
+        images: formData.images,        // String[]
+        colors: formData.colors,        // Json
       }
     });
 

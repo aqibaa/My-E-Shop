@@ -105,6 +105,9 @@ model OrderItem {
   image String
   price Decimal @db.Decimal(12, 2)
 
+ color       String?
+  size        String?
+
   product   Product @relation(fields: [productId], references: [id])
   productId String
 

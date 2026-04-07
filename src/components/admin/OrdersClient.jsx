@@ -70,7 +70,7 @@ export default function OrdersClient({ orders, totalPages, currentPage, totalCou
 
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
 
-                <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
+                <div className="p-5 border-b flex flex-col gap-5 md:flex-row md:items-center md:justify-between bg-gray-50/50">
                     <form onSubmit={handleSearch} className="relative w-full max-w-sm flex gap-2">
 
                         <div className="relative w-full max-w-sm">
@@ -86,12 +86,11 @@ export default function OrdersClient({ orders, totalPages, currentPage, totalCou
                     </form>
 
 
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <div className="flex items-center  sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="text-sm text-muted-foreground flex items-center sm:gap-2">
                             <Truck className="size-4" /> Total: {totalCount} Orders
                         </div>
 
-                        {/* Status Filter Dropdown */}
                         <Select value={currentStatus} onValueChange={handleStatusFilterChange}>
                             <SelectTrigger className="w-[160px] rounded-xl bg-white">
                                 <SelectValue placeholder="Filter Status" />

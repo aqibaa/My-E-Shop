@@ -1,6 +1,14 @@
+"use client"
 import { Separator } from "@/components/ui/separator";
+import { usePathname } from "next/navigation";
+
 
 export default function Footer() {
+  
+    const pathname = usePathname()
+    if (pathname.startsWith('/admin')) {
+        return null;
+    }
     return (
         <footer className="bg-white border-t pb-8">
             <div className="wrapper max-w-7xl mx-auto px-4 mt-6">
@@ -37,23 +45,23 @@ export default function Footer() {
                     </div>
                 </div>
                 <Separator className="my-8" />
-            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                <p className="text-xs text-muted-foreground">
-                    &copy; {new Date().getFullYear()} My-E-Shop. All rights reserved.
-                </p>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        {["VISA", "MASTERCARD", "STRIPE", "PAYPAL"].map((badge) => (
-                            <span
-                                key={badge}
-                                className="rounded-md border border-border bg-background px-2 py-1 text-[10px] font-semibold text-muted-foreground"
-                            >
-                                {badge}
-                            </span>
-                        ))}
+                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                    <p className="text-xs text-muted-foreground">
+                        &copy; {new Date().getFullYear()} My-E-Shop. All rights reserved.
+                    </p>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            {["VISA", "MASTERCARD", "STRIPE", "PAYPAL"].map((badge) => (
+                                <span
+                                    key={badge}
+                                    className="rounded-md border border-border bg-background px-2 py-1 text-[10px] font-semibold text-muted-foreground"
+                                >
+                                    {badge}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </footer>
     );

@@ -24,7 +24,7 @@ export default function CustomersClient({ customers, totalPages, currentPage, to
             current.delete("search");
         }
 
-        current.set("page", 1); // Reset to page 1 on new search
+        current.set("page", 1); 
         router.push(`${pathname}?${current.toString()}`);
     }
 
@@ -37,11 +37,11 @@ export default function CustomersClient({ customers, totalPages, currentPage, to
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="font-serif text-2xl font-bold text-foreground">Customers Directory</h1>
+                <h1 className="text-2xl font-bold text-foreground">Customers Directory</h1>
             </div>
 
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="p-5 border-b flex items-center justify-between bg-gray-50/50">
+                <div className="p-5 border-b flex flex-col gap-5 md:flex-row md:items-center md:justify-between bg-gray-50/50">
                     <form onSubmit={handleSearch} className="relative w-full max-w-sm flex gap-2">
 
                         <div className="relative w-full max-w-sm">

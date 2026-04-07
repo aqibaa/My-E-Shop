@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="antialiased font-sans min-h-screen flex flex-col">
         <Header />
-          <main className="flex-1">
+          <main className="flex-1 wrapper">
             {children}
           </main>
            <Toaster />

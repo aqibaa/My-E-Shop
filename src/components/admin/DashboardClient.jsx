@@ -85,12 +85,12 @@ export default function DashboardClient({ stats, recentOrders, products }) {
                             Products
                         </Button>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col md:flex-row  gap-5">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-64 rounded-xl pl-9" />
+                            <Input placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className=" w-55 md:w-64 rounded-xl pl-9" />
                         </div>
-                        {activeView === "orders" && ( // Dropdown sirf orders view me dikhega
+                        {activeView === "orders" && (
                             <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
                                 <SelectTrigger className="w-32 rounded-xl">
                                     <SelectValue placeholder="Status" />
