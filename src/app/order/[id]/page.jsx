@@ -105,7 +105,7 @@ export default async function OrderDetailsPage({ params, searchParams }) {
             <div className="lg:col-span-2 space-y-6">
                <div className="bg-white border rounded-2xl p-6 shadow-sm">
                   <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                     <Package className="w-5 h-5 text-blue-600" /> Order Items
+                     <Package className="w-5 h-5 " /> Order Items
                   </h2>
                   <div className="space-y-4">
                      {order.orderItems?.map((item) => (
@@ -132,12 +132,12 @@ export default async function OrderDetailsPage({ params, searchParams }) {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white border rounded-2xl p-6 shadow-sm">
                      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-blue-600" /> Shipping Address
+                        <MapPin className="w-5 h-5" /> Shipping Address
                      </h2>
                      <p className="font-medium">{shippingAddress.firstName || ''} {shippingAddress.lastName || ''}</p>
                      <p className="text-gray-600 text-sm mt-1">
                         {shippingAddress.address || 'No address provided'}, {shippingAddress.city || ''}<br />
-                        {shippingAddress.zip || ''}, {shippingAddress.country || 'USA'}
+                        {shippingAddress.zip || ''}, {shippingAddress.country}
                      </p>
                      <p className="text-gray-600 text-sm mt-2">{shippingAddress.phone || ''}</p>
 
@@ -154,7 +154,7 @@ export default async function OrderDetailsPage({ params, searchParams }) {
                   {/* Payment Info */}
                   <div className="bg-white border rounded-2xl p-6 shadow-sm">
                      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-blue-600" /> Payment Info
+                        <CreditCard className="w-5 h-5 " /> Payment Info
                      </h2>
                      <p className="text-sm text-gray-600">Method: <span className="font-medium text-black">{order.paymentMethod || 'Card'}</span></p>
                      <p className="text-sm text-gray-600 mt-1">Date: {formatDate(order.createdAt)}</p>
@@ -190,14 +190,14 @@ export default async function OrderDetailsPage({ params, searchParams }) {
                      <Separator className="my-2" />
                      <div className="flex justify-between text-base font-bold">
                         <span>Total</span>
-                        <span className="text-blue-600">${order.totalPrice.toFixed(2)}</span>
+                        <span className="">${order.totalPrice.toFixed(2)}</span>
                      </div>
                   </div>
 
                   {isOrderOwner ? (
                      <div className="mt-6 space-y-3">
                         {!order.isPaid && (
-                           <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
+                           <Button className="w-full " size="lg">
                               Pay Now
                            </Button>
                         )}

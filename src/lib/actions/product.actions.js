@@ -5,15 +5,18 @@ import prisma from "../db";
 import { convertToPlainObject } from "@/lib/utils";
 
 
-export async function getAllProducts({ query = "", category = "", sort = "newest", limit = 12, page = 1 } = {}) {
+export async function getAllProducts({ query = "", category = "", brand = "", sort = "newest", limit = 12, page = 1 } = {}) {
   try {
     let whereCondition = {};
 
     if (category && category !== "All" && category !== "all") {
-      whereCondition.category = {
-        equals: category,
-        mode: 'insensitive'
-      };
+      const categoryArray = category.split(',').map(c => c.trim());
+      whereCondition.category = { in: categoryArray };
+    }
+
+    if (brand) {
+      const brandArray = brand.split(',').map(b => b.trim());
+      whereCondition.brand = { in: brandArray };
     }
 
     if (query && query.trim() !== "") {
@@ -24,15 +27,10 @@ export async function getAllProducts({ query = "", category = "", sort = "newest
       ];
     }
 
-    let orderByCondition = { createdAt: 'desc' }; // Default is newest
-
-    if (sort === "lowest") {
-      orderByCondition = { price: 'asc' };
-    } else if (sort === "highest") {
-      orderByCondition = { price: 'desc' };
-    } else if (sort === "rating") {
-      orderByCondition = { rating: 'desc' };
-    }
+    let orderByCondition = { createdAt: 'desc' };
+    if (sort === "lowest") orderByCondition = { price: 'asc' };
+    else if (sort === "highest") orderByCondition = { price: 'desc' };
+    else if (sort === "rating") orderByCondition = { rating: 'desc' };
 
     const skip = (Number(page) - 1) * limit;
 
@@ -47,28 +45,43 @@ export async function getAllProducts({ query = "", category = "", sort = "newest
       where: Object.keys(whereCondition).length > 0 ? whereCondition : undefined,
     });
 
-    const allCategories = await prisma.product.findMany({
+    // ----------------------------------------------------
+    // THE FIX: DYNAMIC FACETED FILTERING (Smart Sidebar)
+    // ----------------------------------------------------
+
+    // 1. Brands wahi lao jo selected Category mein aate hain
+    let brandWhere = { ...whereCondition };
+    delete brandWhere.brand; // Brand ko khud se filter hone se roko taaki multiple select ho sakein
+
+    // 2. Categories wahi lao jo selected Brand mein aati hain
+    let catWhere = { ...whereCondition };
+    delete catWhere.category;
+
+    // Ab smart DB calls
+    const availableCategories = await prisma.product.findMany({
+      where: Object.keys(catWhere).length > 0 ? catWhere : undefined,
       select: { category: true },
-      distinct: ['category'],
+      distinct: ['category']
     });
 
-    const allBrands = await prisma.product.findMany({
+    const availableBrands = await prisma.product.findMany({
+      where: Object.keys(brandWhere).length > 0 ? brandWhere : undefined,
       select: { brand: true },
-      distinct: ['brand'],
+      distinct: ['brand']
     });
-
-    const totalPages = Math.ceil(totalCount / limit);
 
     return {
       data: convertToPlainObject(data),
-      totalPages: totalPages,
+      totalPages: Math.ceil(totalCount / limit),
       currentPage: Number(page),
-      availableCategories: allCategories.map(c => c.category).filter(Boolean),
-      availableBrands: allBrands.map(b => b.brand).filter(Boolean)
+
+      // Send smart lists to frontend
+      availableCategories: availableCategories.map(c => c.category).filter(Boolean),
+      availableBrands: availableBrands.map(b => b.brand).filter(Boolean)
     };
   } catch (error) {
-    console.error("Database connection error in getAllProducts:", error);
-    return { data: [], totalPages: 1, currentPage: 1 };
+    console.error("Database error in getAllProducts:", error);
+    return { data: [], totalPages: 1, currentPage: 1, availableCategories: [], availableBrands: [] }
   }
 }
 

@@ -18,7 +18,8 @@ import { useWishlistStore } from "@/store/wishlist-store";
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
+import { useUser } from "@clerk/nextjs"
+import { toggleWishlistAction } from "@/lib/actions/user.actions"
 
 import {
   Accordion,
@@ -42,9 +43,22 @@ import { toast } from "sonner"
 
 export default function ProductPage({ product, relatedProducts }) {
   const { addItem } = useCartStore();
+  const { isSignedIn } = useUser()
 
   const { toggleWishlist, items } = useWishlistStore();
   const isLiked = items.some((item) => item.id === product.id)
+
+
+  const handleWishlistClick = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    toggleWishlist(product)
+
+    if (isSignedIn) {
+      await toggleWishlistAction(product.id);
+    }
+  }
 
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => setIsMounted(true), [])
@@ -65,12 +79,12 @@ export default function ProductPage({ product, relatedProducts }) {
   } else if (product.images && product.images.length > 0) {
     rawImages = product.images;
   } else {
-    rawImages = [product.image]; 
+    rawImages = [product.image];
   }
 
-   const handleColorClick = (index) => {
+  const handleColorClick = (index) => {
     setSelectedColorIndex(index);
-    setCurrentImageIndex(0); 
+    setCurrentImageIndex(0);
   };
 
   const activeImages = rawImages.filter(img => img && typeof img === 'string' && img.trim() !== "");
@@ -95,23 +109,23 @@ export default function ProductPage({ product, relatedProducts }) {
 
     // toast.success(`Added ${quantity} ${product.name} to cart!`);
 
-      let finalColorName = null;
+    let finalColorName = null;
     if (selectedColorIndex !== null && productColors.length > 0) {
-        if (typeof productColors[selectedColorIndex] === 'object') {
-            finalColorName = productColors[selectedColorIndex].name;
-        } 
-        else {
-            finalColorName = productColors[selectedColorIndex];
-        }
+      if (typeof productColors[selectedColorIndex] === 'object') {
+        finalColorName = productColors[selectedColorIndex].name;
+      }
+      else {
+        finalColorName = productColors[selectedColorIndex];
+      }
     }
 
     const finalSize = selectedSize;
 
     const finalImage = activeImages.length > 0 ? activeImages[0] : (product.image || "/placeholder.jpg");
 
-  
+
     addItem(product, quantity, finalColorName, finalSize, finalImage);
-    
+
     toast.success(`Added ${quantity} ${product.name} (${finalColorName || 'Standard'}) to cart!`);
   }
 
@@ -119,6 +133,7 @@ export default function ProductPage({ product, relatedProducts }) {
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
+  console.log(product.brand);
 
 
   return (
@@ -147,7 +162,7 @@ export default function ProductPage({ product, relatedProducts }) {
         <div className="flex flex-1 flex-col gap-4">
           <div className="relative aspect-square  rounded-2xl bg-secondary">
             <ProductImageZoom
-              images={activeImages} 
+              images={activeImages}
               alt={product.name}
               currentIndex={currentImageIndex}
               setCurrentIndex={setCurrentImageIndex}
@@ -165,6 +180,10 @@ export default function ProductPage({ product, relatedProducts }) {
             <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl">
               {product.name}
             </h1>
+            <span>
+              <Badge variant="outline" className="text-purple-500 border-purple-500">{product.brand}</Badge>
+            </span>
+
 
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-0.5">
@@ -287,11 +306,12 @@ export default function ProductPage({ product, relatedProducts }) {
                 <ShoppingBag className="mr-2 size-5" />
                 Add to Cart
               </Button>
+
               <Button
                 size="lg"
                 variant="outline"
                 className="rounded-xl cursor-pointer"
-                onClick={() => toggleWishlist(product)}
+                onClick={(e) =>  handleWishlistClick(e)}
                 aria-label={isMounted && isLiked ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart

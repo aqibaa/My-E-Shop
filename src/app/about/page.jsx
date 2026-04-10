@@ -10,11 +10,10 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="flex flex-col pb-16">
-      {/* Hero Section */}
       <section className="relative h-[40vh] w-full bg-gray-900 flex items-center justify-center overflow-hidden">
          <div className="absolute inset-0 opacity-40">
             <Image 
-            src="/placeholder.jpg"
+            src="/store.jpg"
               alt="About Us Hero" 
               fill 
               className="object-cover" 

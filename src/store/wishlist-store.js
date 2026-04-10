@@ -25,6 +25,8 @@ export const useWishlistStore = create(
       },
 
       clearWishlist: () => set({ items: [] }),
+
+       setWishlist: (dbItems) => set({ items: dbItems }),
     }),
     {
       name: 'wishlist-storage',

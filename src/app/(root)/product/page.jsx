@@ -15,10 +15,12 @@ export default async function ProductsPage({ searchParams }) {
   const categoryQuery = resolvedParams?.category || "";
   const sortQuery = resolvedParams?.sort || "newest";
   const pageQuery = resolvedParams?.page ? Number(resolvedParams.page) : 1;
+  const brandQuery = resolvedParams?.brand || "";
 
   const { data, totalPages, currentPage, availableCategories, availableBrands } = await getAllProducts({
     query: searchQuery,
     sort: sortQuery,
+     brand: brandQuery,
     category: categoryQuery,
     page: pageQuery,
     limit: 12

@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { useWishlistStore } from "@/store/wishlist-store"
 import { useCartStore } from "@/store/cart-store"
 import { toast } from "sonner"
+import { useUser } from "@clerk/nextjs" 
+import { toggleWishlistAction } from "@/lib/actions/user.actions"
 
 
 
@@ -15,13 +17,18 @@ function ProductCard({ product }) {
   const addItem = useCartStore((state) => (state.addItem));
   const { toggleWishlist, items } = useWishlistStore();
   const isLiked = items.some((item) => item.id === product.id)
+  const { isSignedIn } = useUser()
 
+  const handleWishlistClick = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
 
-  const handleWishlistClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleWishlist(product);
-  };
+    toggleWishlist(product)
+
+    if (isSignedIn) {
+      await toggleWishlistAction(product.id);
+    }
+  }
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -40,7 +47,7 @@ function ProductCard({ product }) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-    
+
 
   return (
     <div className="group relative flex flex-col">
@@ -65,7 +72,7 @@ function ProductCard({ product }) {
           variant="ghost"
           size="icon"
           className="absolute right-3 top-3 size-9 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={handleWishlistClick}
+          onClick={ (e) =>handleWishlistClick(e)}
         >
           <Heart
             className={`size-4 transition-colors ${isMounted && isLiked ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`}

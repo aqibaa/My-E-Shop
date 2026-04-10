@@ -3,29 +3,60 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react"
+import { verifyCoupon } from "@/lib/actions/coupon.actions";
+import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge" 
+import { Badge } from "@/components/ui/badge"
 import { useCartStore } from "@/store/cart-store"
+import { toast } from "sonner";
 
 export default function Cartdetail() {
-  const items = useCartStore((state) => state.items)
-  const removeItem = useCartStore((state) => state.removeItem)
-  const addItem = useCartStore((state) => state.addItem) // NAYA: addItem zaroori hai + karne ke liye
+  const { items, removeItem, addItem, decreaseQuantity, appliedCoupon, discountPercentage, applyCoupon, removeCoupon } = useCartStore()
 
   const [isMounted, setIsMounted] = useState(false)
+  const [couponInput, setCouponInput] = useState("")
+  const [isVerifying, setIsVerifying] = useState(false)
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
   if (!isMounted) return null;
 
+
   const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * (item.quantity || 1)), 0)
-  const shipping = subtotal > 100 ? 0 : 15;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+
+  const discountAmount = (subtotal * discountPercentage) / 100
+  const subtotalAfterDiscount = subtotal - discountAmount
+
+  const shipping = subtotalAfterDiscount > 100 ? 0 : 15;
+  const tax = subtotalAfterDiscount * 0.08;
+  const total = subtotalAfterDiscount + shipping + tax;
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return toast.error("Please enter a coupon code");
+    setIsVerifying(true);
+
+    const result = await verifyCoupon(couponInput);
+
+    if (result.success) {
+      applyCoupon(result.code, result.discount);
+      toast.success(result.message);
+      setCouponInput("");
+    } else {
+      toast.error(result.message);
+    }
+    setIsVerifying(false);
+  };
+
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    toast.info("Coupon removed.");
+  }
+
 
   if (items.length === 0) {
     return (
@@ -104,7 +135,7 @@ export default function Cartdetail() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-l-xl rounded-r-none"
-                        onClick={() => useCartStore.getState().decreaseQuantity(item.cartItemId || item.id)}
+                        onClick={() => decreaseQuantity(item.cartItemId || item.id)}
                       >
                         <Minus className="size-3" />
                       </Button>
@@ -152,7 +183,7 @@ export default function Cartdetail() {
               Order Summary
             </h2>
 
-            <div className="flex flex-col gap-3">
+            {/* <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium text-foreground">${Number(subtotal).toFixed(2)}</span>
@@ -176,11 +207,58 @@ export default function Cartdetail() {
                   ${Number(total).toFixed(2)}
                 </span>
               </div>
+            </div> */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-medium text-foreground">${Number(subtotal).toFixed(2)}</span>
+              </div>
+
+              {/* DISCOUNT ROW */}
+              {discountPercentage > 0 && (
+                <div className="flex items-center justify-between text-sm text-green-600 font-medium">
+                  <span>Discount ({discountPercentage}%)</span>
+                  <span>-${Number(discountAmount).toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Shipping</span>
+                <span className="font-medium text-green-600">{shipping === 0 ? "Free" : `$${Number(shipping).toFixed(2)}`}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Tax (8%)</span>
+                <span className="font-medium text-foreground">${Number(tax).toFixed(2)}</span>
+              </div>
+
+              <Separator className="my-2" />
+
+              <div className="flex items-center justify-between">
+                <span className="text-base font-semibold text-foreground">Total</span>
+                <span className="text-2xl font-bold text-blue-600">${Number(total).toFixed(2)}</span>
+              </div>
             </div>
 
-            <div className="mt-6 flex gap-2">
-              <Input placeholder="Promo code" className="rounded-xl bg-gray-50" />
-              <Button variant="outline" className="shrink-0 rounded-xl">Apply</Button>
+            {/* PROMO CODE SECTION */}
+            <div className="mt-6">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">{appliedCoupon}</span>
+                    <span className="text-xs">Applied</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-green-100 hover:text-green-800" onClick={handleRemoveCoupon}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input placeholder="Promo code" className="rounded-xl bg-gray-50" value={couponInput} onChange={(e) => setCouponInput(e.target.value)} />
+                  <Button variant="outline" className="shrink-0 rounded-xl" onClick={handleApplyCoupon} disabled={isVerifying}>
+                    {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Button asChild size="lg" className="mt-6 w-full rounded-xl text-base h-12">

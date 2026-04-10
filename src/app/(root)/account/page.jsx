@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { getUserOrders } from "@/lib/actions/order.actions";
 import AccountTabs from "@/components/shared/account-tabs";
 import { redirect } from "next/navigation";
+import { getUserAddresses } from "@/lib/actions/user.actions";
 
 export const metadata = {
   title: "My Account"
@@ -41,6 +42,8 @@ export default async function AccountPage() {
     console.error("Error fetching orders:", error);
     orders = [];
   }
+  let addresses = [];
+  try { addresses = await getUserAddresses(); } catch (e) { }
 
   const safeOrders = orders.map(order => ({
     ...order,
@@ -65,7 +68,7 @@ export default async function AccountPage() {
         My Account
       </h1>
 
-      <AccountTabs orders={safeOrders} />
+      <AccountTabs orders={safeOrders} addresses={addresses}/>
     </div>
   );
 }

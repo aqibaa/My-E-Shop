@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { addAddress, deleteAddress } from "@/lib/actions/user.actions";
 import Link from "next/link"
 import { useClerk, useUser, UserProfile } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
@@ -12,7 +13,10 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Toaster } from "../ui/sonner";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from "sonner";
 
 const navItems = [
   { id: "orders", label: "My Orders", icon: Package },
@@ -21,15 +25,47 @@ const navItems = [
   { id: "settings", label: "Settings", icon: Settings },
 ]
 
-const ADMIN_EMAILS = ["aaqib.codes@gmail.com"]; 
+const ADMIN_EMAILS = ["aaqib.codes@gmail.com"];
 
 
-export default function AccountTabs({ orders }) {
+export default function AccountTabs({ orders, addresses }) {
   const { user } = useUser();
   const isAdmin = user && ADMIN_EMAILS.includes(user.primaryEmailAddress?.emailAddress?.toLowerCase());
   const [activeTab, setActiveTab] = useState("orders")
   const { signOut } = useClerk();
   const router = useRouter();
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    firstName: "", lastName: "", email: "", phone: "", address: "", city: "", zip: "", country: ""
+  });
+
+
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await addAddress(newAddress);
+      toast.success("Address added successfully!");
+      setShowAddressForm(false);
+      setNewAddress({ firstName: "", lastName: "", email: "", phone: "", address: "", city: "", zip: "", country: "" });
+    } catch (error) {
+      toast.error("Failed to add address.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const handleDeleteAddress = async (id) => {
+    if (confirm("Are you sure you want to delete this address?")) {
+      try {
+        await deleteAddress(id);
+        toast.success("Address deleted.");
+      } catch (e) {
+        toast.error("Could not delete.");
+      }
+    }
+  }
 
 
   function getStatusVariant(status) {
@@ -55,15 +91,6 @@ export default function AccountTabs({ orders }) {
     });
   }
 
-
-  const savedAddresses = orders.reduce((acc, order) => {
-    const addr = JSON.parse(order.shippingAddress);
-    const exists = acc.find(a => a.address === addr.address);
-    if (!exists) {
-      acc.push({ ...addr, id: order.id });
-    }
-    return acc;
-  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -205,29 +232,64 @@ export default function AccountTabs({ orders }) {
           </div>
         )}
 
-        {activeTab === "addresses" && (
+         {activeTab === "addresses" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Recent Shipping Addresses</h2>
+              <h2 className="text-lg font-semibold text-foreground">Saved Addresses</h2>
+              <Button onClick={() => setShowAddressForm(!showAddressForm)} variant={showAddressForm ? "secondary" : "default"} size="sm" className="rounded-xl">
+                {showAddressForm ? "Cancel" : "Add New Address"}
+              </Button>
             </div>
-            {savedAddresses.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {savedAddresses.map((addr, index) => (
-                  <div key={index} className="rounded-2xl border border-border bg-card p-5 relative group">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">{addr.firstName} {addr.lastName}</span>
+
+            {/* ADD ADDRESS FORM */}
+            {showAddressForm && (
+                <form onSubmit={handleAddAddress} className="bg-gray-50 border p-6 rounded-2xl mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>First Name</Label><Input required value={newAddress.firstName} onChange={(e)=> setNewAddress({...newAddress, firstName: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="space-y-2"><Label>Last Name</Label><Input required value={newAddress.lastName} onChange={(e)=> setNewAddress({...newAddress, lastName: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input required type="email" value={newAddress.email} onChange={(e)=> setNewAddress({...newAddress, email: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="space-y-2"><Label>Phone</Label><Input required value={newAddress.phone} onChange={(e)=> setNewAddress({...newAddress, phone: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="space-y-2 sm:col-span-2"><Label>Street Address</Label><Input required value={newAddress.address} onChange={(e)=> setNewAddress({...newAddress, address: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="space-y-2"><Label>City</Label><Input required value={newAddress.city} onChange={(e)=> setNewAddress({...newAddress, city: e.target.value})} className="bg-white rounded-xl" /></div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2"><Label>Zip</Label><Input required value={newAddress.zip} onChange={(e)=> setNewAddress({...newAddress, zip: e.target.value})} className="bg-white rounded-xl" /></div>
+                        <div className="space-y-2"><Label>Country</Label><Input required value={newAddress.country} onChange={(e)=> setNewAddress({...newAddress, country: e.target.value})} className="bg-white rounded-xl" /></div>
                     </div>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {addr.address}, {addr.city} <br /> {addr.zip}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">{addr.phone}</p>
-                  </div>
+                    <div className="sm:col-span-2 mt-2">
+                        <Button type="submit" disabled={isSaving} className="rounded-xl w-full">
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Address"}
+                        </Button>
+                    </div>
+                </form>
+            )}
+
+            {/* LIST REAL ADDRESSES */}
+            {addresses.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {addresses.map((addr) => (
+                    <div key={addr.id} className={`rounded-2xl border p-5 relative group ${addr.isDefault ? "border-blue-600 bg-blue-50/30" : "border-border bg-card"}`}>
+                        <div className="mb-2 flex items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">{addr.firstName} {addr.lastName}</span>
+                            {addr.isDefault && <Badge className="rounded-lg text-[10px] bg-blue-600">Default</Badge>}
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            {addr.address}, {addr.city} <br/> {addr.zip}, {addr.country}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">{addr.phone} • {addr.email}</p>
+                        
+                        <div className="mt-4 flex gap-2">
+                            <Button onClick={() => handleDeleteAddress(addr.id)} variant="ghost" size="sm" className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50">
+                                Delete
+                            </Button>
+                        </div>
+                    </div>
                 ))}
-              </div>
+                </div>
             ) : (
-              <div className="text-center py-10 text-gray-500">
-                No addresses saved yet. Place an order to save an address.
-              </div>
+                !showAddressForm && (
+                  <div className="text-center py-10 text-gray-500 border border-dashed rounded-2xl">
+                      No addresses saved yet. Click above to add one.
+                  </div>
+                )
             )}
           </div>
         )}

@@ -1,11 +1,9 @@
 'use server'
-import { render } from '@react-email/render';
 import { revalidatePath } from "next/cache";
 import { auth, currentUser } from '@clerk/nextjs/server'
 import prisma from '../db';
 import Stripe from 'stripe';
-import { Resend } from 'resend';
-import OrderReceiptEmail from "@/app/(root)/emails/OrderReceipt";
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -30,7 +28,42 @@ export async function createOrder(orderData) {
         }
       });
     }
+ if (userId) {
+      const shippingInfo = orderData.shippingAddress;
+      
+      // Check karo kya is user ka ye exact address pehle se DB mein hai?
+      const existingAddress = await prisma.address.findFirst({
+        where: { 
+          userId: userId, 
+          address: shippingInfo.address, 
+          city: shippingInfo.city 
+        }
+      });
 
+      // Agar address naya hai, toh Address book mein save kar lo
+      if (!existingAddress) {
+        // Check karo ki koi purana address hai ya nahi (to make this default)
+        const addressCount = await prisma.address.count({ where: { userId } });
+        
+        await prisma.address.create({
+          data: {
+            userId: userId,
+            firstName: shippingInfo.firstName,
+            lastName: shippingInfo.lastName,
+            email: shippingInfo.email,
+            phone: shippingInfo.phone,
+            address: shippingInfo.address,
+            city: shippingInfo.city,
+            zip: shippingInfo.zip,
+            country: shippingInfo.country || "USA",
+            isDefault: addressCount === 0 // Agar pehla address hai, to default bana do
+          }
+        });
+      }
+    }
+
+
+    
     const order = await prisma.order.create({
       data: {
         userId: userId,
@@ -233,8 +266,6 @@ export async function updateOrderStatus(orderId, newStatus) {
 
 
 
-// Verify Stripe Payment
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function verifyStripePayment(sessionId, orderId) {
   try {
@@ -242,35 +273,24 @@ export async function verifyStripePayment(sessionId, orderId) {
 
     if (session.payment_status === 'paid') {
 
-      const updatedOrder = await prisma.order.update({
+      const order = await prisma.order.findUnique({ where: { id: orderId } });
+      if (order.isPaid) return true;
+      await prisma.order.update({
         where: { id: orderId },
         data: {
           isPaid: true,
+          status: 'Processing',
           paidAt: new Date(),
           paymentResult: JSON.stringify({
             id: session.id,
             status: session.payment_status,
-            email: session.customer_details?.email,
           })
-        },
-        include: { orderItems: true }
+        }
       });
-      const customerEmail = JSON.parse(updatedOrder.shippingAddress || '{}').email;
-      const emailHtml = await render(OrderReceiptEmail({ order: updatedOrder }));
-      try {
-        await resend.emails.send({
-          from: 'My E-Shop <onboarding@resend.dev>',
-          to: customerEmail,
-          subject: `Order Confirmation #${updatedOrder.id.slice(-8).toUpperCase()}`,
-          html: emailHtml,
-        });
-        console.log("Email sent successfully!");
-      } catch (emailError) {
-        console.error("Failed to send email:", emailError);
-      }
       return true;
     }
     return false;
+
   } catch (error) {
     console.error("Stripe Verification Error:", error);
     return false;
