@@ -44,7 +44,7 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold text-foreground">Get in Touch</h2>
           
           <div className="flex items-start gap-4">
-            <div className="bg-blue-50 p-3 rounded-full text-blue-600 shrink-0">
+            <div className="bg-blue-50 p-3 rounded-full shrink-0">
                <Mail className="w-6 h-6" />
             </div>
             <div>
@@ -55,7 +55,7 @@ export default function ContactPage() {
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="bg-green-50 p-3 rounded-full text-green-600 shrink-0">
+            <div className="bg-green-50 p-3 rounded-full  shrink-0">
                <Phone className="w-6 h-6" />
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function ContactPage() {
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="bg-orange-50 p-3 rounded-full text-orange-600 shrink-0">
+            <div className="bg-orange-50 p-3 rounded-full  shrink-0">
                <MapPin className="w-6 h-6" />
             </div>
             <div>
@@ -106,7 +106,7 @@ export default function ContactPage() {
               />
             </div>
 
-            <Button type="submit" disabled={isLoading} className="w-full rounded-xl h-12 text-md gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button type="submit" disabled={isLoading} className="w-full rounded-xl h-12 text-md gap-2  text-white">
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               {isLoading ? "Sending Message..." : "Send Message"}
             </Button>

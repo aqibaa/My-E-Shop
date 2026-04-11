@@ -18,7 +18,7 @@ export async function getDashboardData() {
     const totalOrders = orders.length;
     const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalPrice), 0);
 
-    const recentOrders = orders.slice(0, 10).map((order) => {
+    const recentOrders = orders.slice(0, 50).map((order) => {
       const address = JSON.parse(order.shippingAddress || '{}');
       return {
         id: order.id,
@@ -31,13 +31,14 @@ export async function getDashboardData() {
     });
 
     const productsData = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 50
     });
 
     const products = productsData.map((p) => ({
       id: p.id,
       name: p.name,
-      sku: p.id.slice(-6).toUpperCase(), 
+      sku: p.id.slice(-6).toUpperCase(),
       price: Number(p.price),
       stock: p.stock,
       status: p.stock > 0 ? "Active" : "Out of Stock"
@@ -63,7 +64,7 @@ export async function getDashboardData() {
 export async function getAdminProducts({ page = 1, limit = 10, search = "" }) {
   try {
     const skip = (Number(page) - 1) * limit;
-    
+
     let whereCondition = {};
     if (search) {
       whereCondition = {
@@ -111,12 +112,12 @@ export async function getAdminProducts({ page = 1, limit = 10, search = "" }) {
 export async function getAdminOrdersPaginated({ page = 1, limit = 10, search = "", status = "all" }) {
   try {
     const skip = (Number(page) - 1) * limit;
-    
+
     let whereCondition = {};
-    
+
     if (status !== "all") {
-        if (status === "active") whereCondition.status = { not: "Delivered" };
-        else whereCondition.status = status;
+      if (status === "active") whereCondition.status = { not: "Delivered" };
+      else whereCondition.status = status;
     }
 
     const [orders, totalCount] = await Promise.all([
@@ -159,7 +160,7 @@ export async function getAdminOrdersPaginated({ page = 1, limit = 10, search = "
 export async function getAdminCustomersPaginated({ page = 1, limit = 10, search = "" }) {
   try {
     const skip = (Number(page) - 1) * limit;
-    
+
     let whereCondition = { role: 'CUSTOMER' };
     if (search) {
       whereCondition.OR = [
@@ -203,28 +204,28 @@ export async function getAdminCustomersPaginated({ page = 1, limit = 10, search 
 export async function getAnalyticsData() {
   try {
     const orders = await prisma.order.findMany({
-      where: { 
-        status: { not: "Cancelled" } 
+      where: {
+        status: { not: "Cancelled" }
       },
       select: {
         totalPrice: true,
         createdAt: true,
       },
       orderBy: {
-        createdAt: 'asc' 
+        createdAt: 'asc'
       }
     });
 
     const monthlyData = {};
 
     orders.forEach(order => {
-     
+
       const month = new Date(order.createdAt).toLocaleString('default', { month: 'short' });
-      
+
       if (!monthlyData[month]) {
         monthlyData[month] = { name: month, revenue: 0, orders: 0 };
       }
-      
+
       monthlyData[month].revenue += Number(order.totalPrice);
       monthlyData[month].orders += 1;
     });

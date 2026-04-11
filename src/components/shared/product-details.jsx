@@ -39,6 +39,7 @@ import ProductImageZoom from "./ProductImageZoom"
 import ProductCard from "@/components/shared/Product-card"
 import { useCartStore } from '@/store/cart-store';
 import { toast } from "sonner"
+import ProductReviews from "@/components/shared/ProductReviews"
 
 
 export default function ProductPage({ product, relatedProducts }) {
@@ -133,7 +134,7 @@ export default function ProductPage({ product, relatedProducts }) {
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
-  console.log(product.brand);
+
 
 
   return (
@@ -181,7 +182,7 @@ export default function ProductPage({ product, relatedProducts }) {
               {product.name}
             </h1>
             <span>
-              <Badge variant="outline" className="text-purple-500 border-purple-500">{product.brand}</Badge>
+              <Badge variant="outline" className=" border-black font-bold">{product.brand}</Badge>
             </span>
 
 
@@ -410,6 +411,7 @@ export default function ProductPage({ product, relatedProducts }) {
           </div>
         )}
       </div>
+      <ProductReviews product={product} />
     </div>
   )
 }

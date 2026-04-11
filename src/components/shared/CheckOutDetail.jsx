@@ -133,6 +133,7 @@ export default function CheckOutDetail({ taxRate = 8, shippingCost = 15, isMaint
         shippingPrice: actualShipping,
         taxPrice: actualTax,
         totalPrice: total,
+        discountAmount: discountAmount,
       }
 
       const result = await createOrder(orderData)

@@ -28,15 +28,15 @@ export async function createOrder(orderData) {
         }
       });
     }
- if (userId) {
+    if (userId) {
       const shippingInfo = orderData.shippingAddress;
-      
+
       // Check karo kya is user ka ye exact address pehle se DB mein hai?
       const existingAddress = await prisma.address.findFirst({
-        where: { 
-          userId: userId, 
-          address: shippingInfo.address, 
-          city: shippingInfo.city 
+        where: {
+          userId: userId,
+          address: shippingInfo.address,
+          city: shippingInfo.city
         }
       });
 
@@ -44,7 +44,7 @@ export async function createOrder(orderData) {
       if (!existingAddress) {
         // Check karo ki koi purana address hai ya nahi (to make this default)
         const addressCount = await prisma.address.count({ where: { userId } });
-        
+
         await prisma.address.create({
           data: {
             userId: userId,
@@ -63,7 +63,7 @@ export async function createOrder(orderData) {
     }
 
 
-    
+
     const order = await prisma.order.create({
       data: {
         userId: userId,
@@ -121,12 +121,25 @@ export async function createOrder(orderData) {
       });
     }
 
+
+
+    let stripeDiscounts = [];
+    if (orderData.discountAmount && orderData.discountAmount > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(orderData.discountAmount * 100),
+        currency: 'usd',
+        duration: 'once',
+        name: 'Promo Discount',
+      });
+      stripeDiscounts = [{ coupon: coupon.id }];
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
       metadata: { orderId: order.id },
-
+      discounts: stripeDiscounts,
       success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/order/${order.id}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/order/${order.id}?canceled=true`,
     });

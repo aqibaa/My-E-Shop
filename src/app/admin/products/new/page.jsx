@@ -84,7 +84,7 @@ export default function AddProductPage() {
                 stock: parseInt(data.stock, 10),
                 features: featuresArray,
                 sizes: sizesArray,
-
+                badge: data.badge,
 
                 image: coverImage,
                 images: images,
@@ -142,6 +142,11 @@ export default function AddProductPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2"><Label>Brand</Label><Input {...register("brand", { required: true })} className="rounded-xl" /></div>
                             <div className="space-y-2"><Label>Category</Label><Input {...register("category", { required: true })} className="rounded-xl" /></div>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <Label>Product Badge (Optional)</Label>
+                            <Input {...register("badge")} placeholder="e.g. Sale, New Arrival, Top Seller" className="rounded-xl" />
+                            <p className="text-xs text-muted-foreground">Leave blank if you don't want a custom text badge.</p>
                         </div>
                     </div>
 

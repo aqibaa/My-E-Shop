@@ -44,7 +44,7 @@ export default function AboutPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
-                  <div className="mx-auto w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
+                  <div className="mx-auto w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mb-6">
                      <ShoppingBag className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold mb-3">Premium Quality</h3>
@@ -52,7 +52,7 @@ export default function AboutPage() {
                </div>
                
                <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
-                  <div className="mx-auto w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-6">
+                  <div className="mx-auto w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mb-6">
                      <Truck className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold mb-3">Fast Delivery</h3>
@@ -60,7 +60,7 @@ export default function AboutPage() {
                </div>
 
                <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
-                  <div className="mx-auto w-14 h-14 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-6">
+                  <div className="mx-auto w-14 h-14 bg-orange-50  rounded-full flex items-center justify-center mb-6">
                      <ShieldCheck className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold mb-3">Secure Shopping</h3>
@@ -68,7 +68,7 @@ export default function AboutPage() {
                </div>
 
                <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
-                  <div className="mx-auto w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6">
+                  <div className="mx-auto w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-6">
                      <HeartHandshake className="w-7 h-7" />
                   </div>
                   <h3 className="text-xl font-bold mb-3">Customer First</h3>

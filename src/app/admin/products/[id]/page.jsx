@@ -42,6 +42,7 @@ export default function EditProductPage() {
           price: data.price,
           originalPrice: data.originalPrice || "",
           stock: data.stock,
+          badge: data.badge || "",
           features: data.features?.join(', ') || "",
           sizes: data.sizes?.join(', ') || "",
         });
@@ -102,7 +103,7 @@ export default function EditProductPage() {
         price: Number(data.price),
         originalPrice: data.originalPrice ? Number(data.originalPrice) : null,
         stock: parseInt(data.stock, 10),
-
+        badge: data.badge || "",
         features: featuresArray,
         sizes: sizesArray,
 
@@ -175,6 +176,10 @@ export default function EditProductPage() {
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Input {...register("category", { required: true })} className="rounded-xl" />
+              </div>
+              <div className="space-y-2 mt-4">
+                <Label>Product Badge (Optional)</Label>
+                <Input {...register("badge")} placeholder="e.g. Sale, New Arrival, Top Seller" className="rounded-xl" />
               </div>
             </div>
           </div>

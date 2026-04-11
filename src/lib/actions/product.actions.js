@@ -105,9 +105,25 @@ export async function getAllCategories() {
 
 // slug products k liye 
 export async function getProductBySlug(slug) {
-  const data = await prisma.product.findUnique({ where: { slug } });
-  return convertToPlainObject(data);
+  try {
+    const data = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        reviews: {
+          include: {
+            user: { select: { name: true, image: true } }
+          },
+          orderBy: { createdAt: 'desc' } // Naye reviews pehle
+        }
+      }
+    });
+    return convertToPlainObject(data);
+  } catch (error) {
+    console.error("Database error in getProductBySlug:", error);
+    return null;
+  }
 }
+
 
 // related product k liye 
 export async function getRelatedProducts({ categoryId, productId, limit = 4 }) {
@@ -137,6 +153,7 @@ export async function createProduct(formData) {
         brand: formData.brand,
         stock: parseInt(formData.stock),
         images: formData.images,
+        badge: formData.badge || null,
         isFeatured: formData.isFeatured || false,
         colors: formData.colors,
         sizes: formData.sizes,
@@ -202,8 +219,7 @@ export async function updateProduct(id, formData) {
         price: formData.price,
         originalPrice: formData.originalPrice ?? null,
         stock: formData.stock,
-
-        // ✅ these were missing before
+        badge: formData.badge || null,
         features: formData.features,      // String[]
         sizes: formData.sizes,         // String[]
         image: formData.image,         // String
