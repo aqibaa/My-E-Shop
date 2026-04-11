@@ -3,10 +3,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
-import OrderReceiptEmail from '@/emails/OrderReceipt';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+
+import OrderReceiptEmail from '@/emails/OrderReceipt';
+export const dynamic = 'force-dynamic';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
 
 export async function POST(req) {
   const payload = await req.text();
