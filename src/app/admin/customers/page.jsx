@@ -6,7 +6,6 @@ export const metadata = {
 }
 
 export default async function AdminCustomersPage({ searchParams }) {
-  // Await search params for Next.js 15+
   const resolvedParams = await searchParams;
   
   const page = resolvedParams?.page ? Number(resolvedParams.page) : 1;
@@ -17,6 +16,8 @@ export default async function AdminCustomersPage({ searchParams }) {
       limit: 10, 
       search 
   });
+
+
 
   return (
     <CustomersClient 

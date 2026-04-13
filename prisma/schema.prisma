@@ -80,7 +80,7 @@ model Product {
 
 model Review {
   id        String   @id @default(cuid())
-  rating    Int      // 1 se 5 tak star rating
+  rating    Int      
   comment   String   @db.Text
   createdAt DateTime @default(now())
   
@@ -102,7 +102,7 @@ model Address {
   zip        String
   phone      String
   country    String   @default("USA")
-  isDefault  Boolean  @default(false) // Kya ye default address hai?
+  isDefault  Boolean  @default(false) 
   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String

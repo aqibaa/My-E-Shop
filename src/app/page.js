@@ -4,7 +4,6 @@ import { PromoBanner } from "@/components/shared/Promo-banner";
 import { ProductsGrid } from "@/components/shared/Product-grid";
 import { getAllProducts } from "@/lib/actions/product.actions";
 
-// Cache this page for 1 hour to save database reads (Good for production)
 export const revalidate = 3600;
 
 export const metadata = {
@@ -15,8 +14,6 @@ export default async function Home() {
   const recentResponse = await getAllProducts({ limit: 8, page: 1 });
   const latestProducts = recentResponse?.data || [];
 
-  // 2. Fetch Best Sellers (Iske liye humein backend mein query change karni hogi, 
-  // lekin abhi ke liye hum next 8 products utha lete hain as "Best Sellers" just to show different data)
   const bestSellerResponse = await getAllProducts({ limit: 8, page: 2 });
   const bestSellers = bestSellerResponse?.data || [];
 

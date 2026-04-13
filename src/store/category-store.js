@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getAllCategories } from '@/lib/actions/product.actions'; // Server action (agar aapne banaya ho)
+import { getAllCategories } from '@/lib/actions/product.actions'; 
 
 export const useCategoryStore = create((set, get) => ({
   categories: [], 

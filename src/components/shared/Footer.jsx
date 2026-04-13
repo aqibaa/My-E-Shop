@@ -26,8 +26,7 @@ export default function Footer() {
         
         setIsSubscribing(true);
         try {
-            // yah demi k tor py hai
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Fake 1 sec delay
+            await new Promise((resolve) => setTimeout(resolve, 1000)); 
             toast.success("Thank you for subscribing to our newsletter!");
             setEmail(""); 
         } catch (error) {
