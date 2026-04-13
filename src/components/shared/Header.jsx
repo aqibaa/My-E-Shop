@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs"; // useUser added
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs"; 
 import { useCartStore } from "@/store/cart-store";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -199,7 +199,7 @@ export default function Header() {
                     </Button>
 
                     <Button variant="ghost" size="icon" asChild className="sm:inline-flex h-9 w-9 sm:h-10 sm:w-10">
-                        <Link href="/wishlist" aria-label="Wishlist">
+                        <Link href="/Wishlist" aria-label="Wishlist">
                             <Heart className="size-4 sm:size-5" />
                         </Link>
                     </Button>
