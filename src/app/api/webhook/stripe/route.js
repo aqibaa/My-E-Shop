@@ -4,13 +4,6 @@ import prisma from '@/lib/db';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 
-<<<<<<< HEAD
-=======
-
-
-import OrderReceiptEmail from '@/emails/OrderReceipt';
-export const dynamic = 'force-dynamic';
->>>>>>> 8f9a9d418053984be7445dcb8579ce64dca7e094
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
 
