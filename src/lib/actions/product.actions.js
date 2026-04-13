@@ -220,11 +220,11 @@ export async function updateProduct(id, formData) {
         originalPrice: formData.originalPrice ?? null,
         stock: formData.stock,
         badge: formData.badge || null,
-        features: formData.features,      // String[]
-        sizes: formData.sizes,         // String[]
-        image: formData.image,         // String
-        images: formData.images,        // String[]
-        colors: formData.colors,        // Json
+        features: formData.features,      
+        sizes: formData.sizes,        
+        image: formData.image,         
+        images: formData.images,       
+        colors: formData.colors,        
       }
     });
 

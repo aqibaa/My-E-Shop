@@ -5,8 +5,8 @@ import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import OrderReceiptEmail from '@/emails/OrderReceipt';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const resend = new Resend(process.env.RESEND_API_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
 
 export async function POST(req) {
   const payload = await req.text();
@@ -18,7 +18,7 @@ export async function POST(req) {
     event = stripe.webhooks.constructEvent(
       payload,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET 
+      process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
     console.error('Webhook Error:', err.message);
@@ -27,7 +27,7 @@ export async function POST(req) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    
+
     const orderId = session.metadata.orderId;
 
     try {
@@ -35,7 +35,7 @@ export async function POST(req) {
         where: { id: orderId },
         data: {
           isPaid: true,
-          status: 'Processing', 
+          status: 'Processing',
           paidAt: new Date(),
           paymentResult: JSON.stringify({
             id: session.id,
@@ -43,7 +43,7 @@ export async function POST(req) {
             email: session.customer_details?.email,
           })
         },
-        include: { orderItems: true } 
+        include: { orderItems: true }
       });
 
       const customerEmail = JSON.parse(updatedOrder.shippingAddress || '{}').email;
@@ -51,7 +51,7 @@ export async function POST(req) {
 
       await resend.emails.send({
         from: 'My E-Shop <onboarding@resend.dev>',
-        to: customerEmail, 
+        to: customerEmail,
         subject: `Order Confirmation #${updatedOrder.id.slice(-8).toUpperCase()}`,
         html: emailHtml,
       });

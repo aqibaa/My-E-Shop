@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { auth, currentUser } from '@clerk/nextjs/server'
 import prisma from '../db';
 import Stripe from 'stripe';
+import nodemailer from 'nodemailer'; 
+import { render } from "@react-email/render";
+import OrderReceiptEmail from "@/emails/OrderReceipt";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -31,7 +34,6 @@ export async function createOrder(orderData) {
     if (userId) {
       const shippingInfo = orderData.shippingAddress;
 
-      // Check karo kya is user ka ye exact address pehle se DB mein hai?
       const existingAddress = await prisma.address.findFirst({
         where: {
           userId: userId,
@@ -40,9 +42,7 @@ export async function createOrder(orderData) {
         }
       });
 
-      // Agar address naya hai, toh Address book mein save kar lo
       if (!existingAddress) {
-        // Check karo ki koi purana address hai ya nahi (to make this default)
         const addressCount = await prisma.address.count({ where: { userId } });
 
         await prisma.address.create({
@@ -56,7 +56,7 @@ export async function createOrder(orderData) {
             city: shippingInfo.city,
             zip: shippingInfo.zip,
             country: shippingInfo.country || "USA",
-            isDefault: addressCount === 0 // Agar pehla address hai, to default bana do
+            isDefault: addressCount === 0 
           }
         });
       }
@@ -280,32 +280,92 @@ export async function updateOrderStatus(orderId, newStatus) {
 
 
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+
+
 export async function verifyStripePayment(sessionId, orderId) {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status === 'paid') {
-
-      const order = await prisma.order.findUnique({ where: { id: orderId } });
-      if (order.isPaid) return true;
-      await prisma.order.update({
+      
+      const updatedOrder = await prisma.order.update({
         where: { id: orderId },
         data: {
           isPaid: true,
           status: 'Processing',
           paidAt: new Date(),
           paymentResult: JSON.stringify({
-            id: session.id,
-            status: session.payment_status,
+             id: session.id,
+             status: session.payment_status,
+             email: session.customer_details?.email,
           })
-        }
+        },
+        include: { orderItems: true } 
       });
+
+      const customerEmail = JSON.parse(updatedOrder.shippingAddress || '{}').email;
+      
+      const emailHtml = await render(OrderReceiptEmail({ order: updatedOrder }));
+
+    
+      try {
+        await transporter.sendMail({
+          from: `"My E-Shop" <${process.env.EMAIL_USER}>`, 
+          to: customerEmail, 
+          subject: `Order Confirmation #${updatedOrder.id.slice(-8).toUpperCase()}`,
+          html: emailHtml, 
+        });
+        console.log(`✅ Email successfully sent to ${customerEmail} via Gmail!`);
+      } catch (emailError) {
+        console.error("❌ Failed to send email via Nodemailer:", emailError);
+      }
+
       return true;
     }
     return false;
-
   } catch (error) {
     console.error("Stripe Verification Error:", error);
     return false;
   }
 }
+
+
+
+
+// export async function verifyStripePayment(sessionId, orderId) {
+//   try {
+//     const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+//     if (session.payment_status === 'paid') {
+
+//       const order = await prisma.order.findUnique({ where: { id: orderId } });
+//       if (order.isPaid) return true;
+//       await prisma.order.update({
+//         where: { id: orderId },
+//         data: {
+//           isPaid: true,
+//           status: 'Processing',
+//           paidAt: new Date(),
+//           paymentResult: JSON.stringify({
+//             id: session.id,
+//             status: session.payment_status,
+//           })
+//         }
+//       });
+//       return true;
+//     }
+//     return false;
+
+//   } catch (error) {
+//     console.error("Stripe Verification Error:", error);
+//     return false;
+//   }
+// }
